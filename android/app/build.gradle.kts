@@ -6,10 +6,13 @@ plugins {
 
 android {
     namespace = "dev.ngallegos.hydratrack"
-    compileSdk = flutter.compileSdkVersion
+    // flutter_local_notifications requires compileSdk 37; Flutter defaults to 36.
+    compileSdk = maxOf(flutter.compileSdkVersion, 37)
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        // Scheduled notifications rely on Java 8+ APIs desugared for older Android.
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -42,6 +45,10 @@ kotlin {
     compilerOptions {
         jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
     }
+}
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
 
 flutter {
