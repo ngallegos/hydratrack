@@ -31,6 +31,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     },
     routes: [
       GoRoute(path: '/', builder: (_, _) => const HomeScreen()),
+      GoRoute(path: '/history', builder: (_, _) => const HistoryScreen()),
       GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingScreen()),
       GoRoute(
         path: '/settings',
