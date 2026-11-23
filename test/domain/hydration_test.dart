@@ -34,6 +34,13 @@ void main() {
     'gone': _category('gone', 1, deleted: true),
   };
 
+  test('effectiveHydrationMl multiplies volume by the category factor', () {
+    expect(
+      effectiveHydrationMl(_entry('coffee', 200), categories['coffee']!),
+      160,
+    );
+  });
+
   group('hydrationByCategory', () {
     test('applies the hydration factor and groups by category', () {
       final result = hydrationByCategory([
