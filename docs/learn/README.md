@@ -5,6 +5,7 @@ One note per build phase, plus an exercise where noted. Written for a C#/.NET de
 | Phase | Notes |
 | --- | --- |
 | 1 | [Scaffold](01-scaffold.md) |
+| 2 | [Data layer](02-data.md) — exercise: `hydrationByCategory` |
 
 ## Toolchain cheatsheet
 
