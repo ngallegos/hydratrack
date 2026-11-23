@@ -7,6 +7,7 @@ import 'data/repositories/category_repository.dart';
 import 'data/repositories/drink_repository.dart';
 import 'data/repositories/settings_repository.dart';
 import 'data/seed.dart';
+import 'features/home/home_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,7 +46,7 @@ class HydraTrackApp extends StatelessWidget {
           brightness: Brightness.dark,
         ),
       ),
-      home: const Scaffold(body: Center(child: Text('HydraTrack'))),
+      home: const HomeScreen(),
     );
   }
 }
