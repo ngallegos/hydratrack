@@ -36,6 +36,11 @@ class HomeScreen extends ConsumerWidget {
         title: const Text('HydraTrack'),
         actions: [
           IconButton(
+            tooltip: 'Stats',
+            icon: const Icon(Icons.bar_chart),
+            onPressed: () => context.push('/stats'),
+          ),
+          IconButton(
             tooltip: 'History',
             icon: const Icon(Icons.history),
             onPressed: () => context.push('/history'),
