@@ -16,6 +16,18 @@ class SettingsRepository {
     return row?.value;
   }
 
+  Stream<Map<String, String>> watchAll() => _db
+      .select(_db.settings)
+      .watch()
+      .map((rows) => {for (final row in rows) row.key: row.value});
+
+  Future<void> setMany(Map<String, String> values) => _db.batch((batch) {
+    batch.insertAllOnConflictUpdate(_db.settings, [
+      for (final entry in values.entries)
+        SettingsCompanion.insert(key: entry.key, value: entry.value),
+    ]);
+  });
+
   Future<void> set(String key, String value) => _db
       .into(_db.settings)
       .insertOnConflictUpdate(SettingsCompanion.insert(key: key, value: value));

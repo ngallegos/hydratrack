@@ -6,6 +6,8 @@ import '../../domain/drink_category.dart';
 import '../../domain/hydration.dart';
 import '../../domain/log_entry.dart';
 import '../avatar/avatar_shape.dart';
+import '../settings/app_settings.dart';
+import '../settings/settings_providers.dart';
 
 DateTime _dayOf(DateTime t) => DateTime(t.year, t.month, t.day);
 
@@ -36,9 +38,17 @@ final todayEntriesProvider = StreamProvider<List<LogEntry>>((ref) {
   return ref.watch(logRepositoryProvider).watchDay(day);
 });
 
-final dailyGoalMlProvider = Provider<int>((ref) => 2500);
+final dailyGoalMlProvider = Provider<int>(
+  (ref) =>
+      ref.watch(appSettingsProvider.select((s) => s.value?.dailyGoalMl)) ??
+      defaultDailyGoalMl,
+);
 
-final avatarShapeProvider = Provider<AvatarShape>((ref) => AvatarShape.bottle);
+final avatarShapeProvider = Provider<AvatarShape>(
+  (ref) =>
+      ref.watch(appSettingsProvider.select((s) => s.value?.avatarShape)) ??
+      AvatarShape.bottle,
+);
 
 /// Effective hydration (ml, after hydration factors) per category for today.
 final todayHydrationProvider = Provider<Map<String, double>>((ref) {
