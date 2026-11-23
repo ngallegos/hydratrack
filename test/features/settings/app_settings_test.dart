@@ -43,6 +43,14 @@ void main() {
       expect(settings.reminders, const ReminderSettings());
     });
 
+    test('sync defaults to off with no folder', () {
+      final settings = AppSettings.fromMap(const {});
+
+      expect(settings.syncMode, SyncMode.off);
+      expect(settings.syncFolderPath, isNull);
+      expect(settings.lastSyncAt, isNull);
+    });
+
     test('falls back to defaults for corrupt values', () {
       final settings = AppSettings.fromMap(const {
         SettingKeys.dailyGoalMl: 'lots',
@@ -79,6 +87,21 @@ void main() {
       final settings = await current();
       expect(settings.dailyGoalMl, 3000);
       expect(settings.avatarShape, AvatarShape.fish);
+    });
+
+    test('sync settings round-trip through storage', () async {
+      final at = DateTime.utc(2026, 11, 23, 12, 30);
+
+      await actions.setSyncFolder('/storage/Sync/hydratrack');
+      await actions.recordSync(at);
+
+      final settings = await current();
+      expect(settings.syncMode, SyncMode.folder);
+      expect(settings.syncFolderPath, '/storage/Sync/hydratrack');
+      expect(settings.lastSyncAt, at);
+
+      await actions.setSyncMode(SyncMode.off);
+      expect((await current()).syncMode, SyncMode.off);
     });
 
     test('setReminders round-trips through storage', () async {

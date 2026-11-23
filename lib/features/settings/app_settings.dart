@@ -16,9 +16,14 @@ abstract final class SettingKeys {
   static const activityLevel = 'activityLevel';
   static const onboardingDone = 'onboardingDone';
   static const reminders = 'reminders';
+  static const syncMode = 'syncMode';
+  static const syncFolderPath = 'syncFolderPath';
+  static const lastSyncAt = 'lastSyncAt';
 }
 
 const defaultDailyGoalMl = 2500;
+
+enum SyncMode { off, folder, drive }
 
 @freezed
 abstract class AppSettings with _$AppSettings {
@@ -28,6 +33,9 @@ abstract class AppSettings with _$AppSettings {
     @Default(ActivityLevel.sedentary) ActivityLevel activity,
     @Default(false) bool onboardingDone,
     @Default(ReminderSettings()) ReminderSettings reminders,
+    @Default(SyncMode.off) SyncMode syncMode,
+    String? syncFolderPath,
+    DateTime? lastSyncAt,
     double? weightKg,
   }) = _AppSettings;
 
@@ -42,6 +50,10 @@ abstract class AppSettings with _$AppSettings {
         ActivityLevel.sedentary,
     onboardingDone: map[SettingKeys.onboardingDone] == 'true',
     reminders: _parseReminders(map[SettingKeys.reminders]),
+    syncMode:
+        SyncMode.values.asNameMap()[map[SettingKeys.syncMode]] ?? SyncMode.off,
+    syncFolderPath: map[SettingKeys.syncFolderPath],
+    lastSyncAt: DateTime.tryParse(map[SettingKeys.lastSyncAt] ?? ''),
     weightKg: double.tryParse(map[SettingKeys.weightKg] ?? ''),
   );
 }
@@ -68,6 +80,17 @@ class SettingsActions {
 
   Future<void> setReminders(ReminderSettings reminders) =>
       _repository.set(SettingKeys.reminders, jsonEncode(reminders.toJson()));
+
+  Future<void> setSyncFolder(String path) => _repository.setMany({
+    SettingKeys.syncMode: SyncMode.folder.name,
+    SettingKeys.syncFolderPath: path,
+  });
+
+  Future<void> setSyncMode(SyncMode mode) =>
+      _repository.set(SettingKeys.syncMode, mode.name);
+
+  Future<void> recordSync(DateTime at) =>
+      _repository.set(SettingKeys.lastSyncAt, at.toUtc().toIso8601String());
 
   Future<void> completeOnboarding({
     required int dailyGoalMl,
