@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AppSettings {
 
- int get dailyGoalMl; AvatarShape get avatarShape; ActivityLevel get activity; bool get onboardingDone; double? get weightKg;
+ int get dailyGoalMl; AvatarShape get avatarShape; ActivityLevel get activity; bool get onboardingDone; ReminderSettings get reminders; double? get weightKg;
 /// Create a copy of AppSettings
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -27,20 +27,20 @@ $AppSettingsCopyWith<AppSettings> get copyWith => _$AppSettingsCopyWithImpl<AppS
 @override
 bool operator ==(Object other) {
   final _this = this as AppSettings;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppSettings&&(identical(other.dailyGoalMl, _this.dailyGoalMl) || other.dailyGoalMl == _this.dailyGoalMl)&&(identical(other.avatarShape, _this.avatarShape) || other.avatarShape == _this.avatarShape)&&(identical(other.activity, _this.activity) || other.activity == _this.activity)&&(identical(other.onboardingDone, _this.onboardingDone) || other.onboardingDone == _this.onboardingDone)&&(identical(other.weightKg, _this.weightKg) || other.weightKg == _this.weightKg));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppSettings&&(identical(other.dailyGoalMl, _this.dailyGoalMl) || other.dailyGoalMl == _this.dailyGoalMl)&&(identical(other.avatarShape, _this.avatarShape) || other.avatarShape == _this.avatarShape)&&(identical(other.activity, _this.activity) || other.activity == _this.activity)&&(identical(other.onboardingDone, _this.onboardingDone) || other.onboardingDone == _this.onboardingDone)&&(identical(other.reminders, _this.reminders) || other.reminders == _this.reminders)&&(identical(other.weightKg, _this.weightKg) || other.weightKg == _this.weightKg));
 }
 
 
 @override
 int get hashCode {
   final _this = this as AppSettings;
-  return Object.hash(runtimeType,_this.dailyGoalMl,_this.avatarShape,_this.activity,_this.onboardingDone,_this.weightKg);
+  return Object.hash(runtimeType,_this.dailyGoalMl,_this.avatarShape,_this.activity,_this.onboardingDone,_this.reminders,_this.weightKg);
 }
 
 @override
 String toString() {
   final _this = this as AppSettings;
-  return 'AppSettings(dailyGoalMl: ${_this.dailyGoalMl}, avatarShape: ${_this.avatarShape}, activity: ${_this.activity}, onboardingDone: ${_this.onboardingDone}, weightKg: ${_this.weightKg})';
+  return 'AppSettings(dailyGoalMl: ${_this.dailyGoalMl}, avatarShape: ${_this.avatarShape}, activity: ${_this.activity}, onboardingDone: ${_this.onboardingDone}, reminders: ${_this.reminders}, weightKg: ${_this.weightKg})';
 }
 
 
@@ -51,11 +51,11 @@ abstract mixin class $AppSettingsCopyWith<$Res>  {
   factory $AppSettingsCopyWith(AppSettings value, $Res Function(AppSettings) _then) = _$AppSettingsCopyWithImpl;
 @useResult
 $Res call({
- int dailyGoalMl, AvatarShape avatarShape, ActivityLevel activity, bool onboardingDone, double? weightKg
+ int dailyGoalMl, AvatarShape avatarShape, ActivityLevel activity, bool onboardingDone, ReminderSettings reminders, double? weightKg
 });
 
 
-
+$ReminderSettingsCopyWith<$Res> get reminders;
 
 }
 /// @nodoc
@@ -68,17 +68,27 @@ class _$AppSettingsCopyWithImpl<$Res>
 
 /// Create a copy of AppSettings
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? dailyGoalMl = null,Object? avatarShape = null,Object? activity = null,Object? onboardingDone = null,Object? weightKg = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? dailyGoalMl = null,Object? avatarShape = null,Object? activity = null,Object? onboardingDone = null,Object? reminders = null,Object? weightKg = freezed,}) {
   return _then(AppSettings(
 dailyGoalMl: null == dailyGoalMl ? _self.dailyGoalMl : dailyGoalMl // ignore: cast_nullable_to_non_nullable
 as int,avatarShape: null == avatarShape ? _self.avatarShape : avatarShape // ignore: cast_nullable_to_non_nullable
 as AvatarShape,activity: null == activity ? _self.activity : activity // ignore: cast_nullable_to_non_nullable
 as ActivityLevel,onboardingDone: null == onboardingDone ? _self.onboardingDone : onboardingDone // ignore: cast_nullable_to_non_nullable
-as bool,weightKg: freezed == weightKg ? _self.weightKg : weightKg // ignore: cast_nullable_to_non_nullable
+as bool,reminders: null == reminders ? _self.reminders : reminders // ignore: cast_nullable_to_non_nullable
+as ReminderSettings,weightKg: freezed == weightKg ? _self.weightKg : weightKg // ignore: cast_nullable_to_non_nullable
 as double?,
   ));
 }
-
+/// Create a copy of AppSettings
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ReminderSettingsCopyWith<$Res> get reminders {
+  
+  return $ReminderSettingsCopyWith<$Res>(_self.reminders, (value) {
+    return _then(_self.copyWith(reminders: value));
+  });
+}
 }
 
 
@@ -160,10 +170,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int dailyGoalMl,  AvatarShape avatarShape,  ActivityLevel activity,  bool onboardingDone,  double? weightKg)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int dailyGoalMl,  AvatarShape avatarShape,  ActivityLevel activity,  bool onboardingDone,  ReminderSettings reminders,  double? weightKg)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AppSettings() when $default != null:
-return $default(_that.dailyGoalMl,_that.avatarShape,_that.activity,_that.onboardingDone,_that.weightKg);case _:
+return $default(_that.dailyGoalMl,_that.avatarShape,_that.activity,_that.onboardingDone,_that.reminders,_that.weightKg);case _:
   return orElse();
 
 }
@@ -181,10 +191,10 @@ return $default(_that.dailyGoalMl,_that.avatarShape,_that.activity,_that.onboard
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int dailyGoalMl,  AvatarShape avatarShape,  ActivityLevel activity,  bool onboardingDone,  double? weightKg)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int dailyGoalMl,  AvatarShape avatarShape,  ActivityLevel activity,  bool onboardingDone,  ReminderSettings reminders,  double? weightKg)  $default,) {final _that = this;
 switch (_that) {
 case _AppSettings():
-return $default(_that.dailyGoalMl,_that.avatarShape,_that.activity,_that.onboardingDone,_that.weightKg);case _:
+return $default(_that.dailyGoalMl,_that.avatarShape,_that.activity,_that.onboardingDone,_that.reminders,_that.weightKg);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -201,10 +211,10 @@ return $default(_that.dailyGoalMl,_that.avatarShape,_that.activity,_that.onboard
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int dailyGoalMl,  AvatarShape avatarShape,  ActivityLevel activity,  bool onboardingDone,  double? weightKg)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int dailyGoalMl,  AvatarShape avatarShape,  ActivityLevel activity,  bool onboardingDone,  ReminderSettings reminders,  double? weightKg)?  $default,) {final _that = this;
 switch (_that) {
 case _AppSettings() when $default != null:
-return $default(_that.dailyGoalMl,_that.avatarShape,_that.activity,_that.onboardingDone,_that.weightKg);case _:
+return $default(_that.dailyGoalMl,_that.avatarShape,_that.activity,_that.onboardingDone,_that.reminders,_that.weightKg);case _:
   return null;
 
 }
@@ -216,13 +226,14 @@ return $default(_that.dailyGoalMl,_that.avatarShape,_that.activity,_that.onboard
 
 
 class _AppSettings implements AppSettings {
-  const _AppSettings({this.dailyGoalMl = defaultDailyGoalMl, this.avatarShape = AvatarShape.bottle, this.activity = ActivityLevel.sedentary, this.onboardingDone = false, this.weightKg});
+  const _AppSettings({this.dailyGoalMl = defaultDailyGoalMl, this.avatarShape = AvatarShape.bottle, this.activity = ActivityLevel.sedentary, this.onboardingDone = false, this.reminders = const ReminderSettings(), this.weightKg});
   
 
 @override@JsonKey() final  int dailyGoalMl;
 @override@JsonKey() final  AvatarShape avatarShape;
 @override@JsonKey() final  ActivityLevel activity;
 @override@JsonKey() final  bool onboardingDone;
+@override@JsonKey() final  ReminderSettings reminders;
 @override final  double? weightKg;
 
 /// Create a copy of AppSettings
@@ -235,18 +246,18 @@ _$AppSettingsCopyWith<_AppSettings> get copyWith => __$AppSettingsCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppSettings&&(identical(other.dailyGoalMl, dailyGoalMl) || other.dailyGoalMl == dailyGoalMl)&&(identical(other.avatarShape, avatarShape) || other.avatarShape == avatarShape)&&(identical(other.activity, activity) || other.activity == activity)&&(identical(other.onboardingDone, onboardingDone) || other.onboardingDone == onboardingDone)&&(identical(other.weightKg, weightKg) || other.weightKg == weightKg));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppSettings&&(identical(other.dailyGoalMl, dailyGoalMl) || other.dailyGoalMl == dailyGoalMl)&&(identical(other.avatarShape, avatarShape) || other.avatarShape == avatarShape)&&(identical(other.activity, activity) || other.activity == activity)&&(identical(other.onboardingDone, onboardingDone) || other.onboardingDone == onboardingDone)&&(identical(other.reminders, reminders) || other.reminders == reminders)&&(identical(other.weightKg, weightKg) || other.weightKg == weightKg));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,dailyGoalMl,avatarShape,activity,onboardingDone,weightKg);
+    return Object.hash(runtimeType,dailyGoalMl,avatarShape,activity,onboardingDone,reminders,weightKg);
 }
 
 @override
 String toString() {
-    return 'AppSettings(dailyGoalMl: $dailyGoalMl, avatarShape: $avatarShape, activity: $activity, onboardingDone: $onboardingDone, weightKg: $weightKg)';
+    return 'AppSettings(dailyGoalMl: $dailyGoalMl, avatarShape: $avatarShape, activity: $activity, onboardingDone: $onboardingDone, reminders: $reminders, weightKg: $weightKg)';
 }
 
 
@@ -257,11 +268,11 @@ abstract mixin class _$AppSettingsCopyWith<$Res> implements $AppSettingsCopyWith
   factory _$AppSettingsCopyWith(_AppSettings value, $Res Function(_AppSettings) _then) = __$AppSettingsCopyWithImpl;
 @override @useResult
 $Res call({
- int dailyGoalMl, AvatarShape avatarShape, ActivityLevel activity, bool onboardingDone, double? weightKg
+ int dailyGoalMl, AvatarShape avatarShape, ActivityLevel activity, bool onboardingDone, ReminderSettings reminders, double? weightKg
 });
 
 
-
+@override $ReminderSettingsCopyWith<$Res> get reminders;
 
 }
 /// @nodoc
@@ -274,18 +285,28 @@ class __$AppSettingsCopyWithImpl<$Res>
 
 /// Create a copy of AppSettings
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? dailyGoalMl = null,Object? avatarShape = null,Object? activity = null,Object? onboardingDone = null,Object? weightKg = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? dailyGoalMl = null,Object? avatarShape = null,Object? activity = null,Object? onboardingDone = null,Object? reminders = null,Object? weightKg = freezed,}) {
   return _then(_AppSettings(
 dailyGoalMl: null == dailyGoalMl ? _self.dailyGoalMl : dailyGoalMl // ignore: cast_nullable_to_non_nullable
 as int,avatarShape: null == avatarShape ? _self.avatarShape : avatarShape // ignore: cast_nullable_to_non_nullable
 as AvatarShape,activity: null == activity ? _self.activity : activity // ignore: cast_nullable_to_non_nullable
 as ActivityLevel,onboardingDone: null == onboardingDone ? _self.onboardingDone : onboardingDone // ignore: cast_nullable_to_non_nullable
-as bool,weightKg: freezed == weightKg ? _self.weightKg : weightKg // ignore: cast_nullable_to_non_nullable
+as bool,reminders: null == reminders ? _self.reminders : reminders // ignore: cast_nullable_to_non_nullable
+as ReminderSettings,weightKg: freezed == weightKg ? _self.weightKg : weightKg // ignore: cast_nullable_to_non_nullable
 as double?,
   ));
 }
 
-
+/// Create a copy of AppSettings
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ReminderSettingsCopyWith<$Res> get reminders {
+  
+  return $ReminderSettingsCopyWith<$Res>(_self.reminders, (value) {
+    return _then(_self.copyWith(reminders: value));
+  });
+}
 }
 
 // dart format on

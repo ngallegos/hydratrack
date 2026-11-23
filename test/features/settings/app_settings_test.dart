@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hydratrack/data/db/app_database.dart';
 import 'package:hydratrack/data/repositories/settings_repository.dart';
 import 'package:hydratrack/domain/goal.dart';
+import 'package:hydratrack/domain/reminder_settings.dart';
 import 'package:hydratrack/features/avatar/avatar_shape.dart';
 import 'package:hydratrack/features/settings/app_settings.dart';
 
@@ -32,6 +33,14 @@ void main() {
       expect(settings.activity, ActivityLevel.veryActive);
       expect(settings.weightKg, 72.5);
       expect(settings.onboardingDone, isTrue);
+    });
+
+    test('falls back to default reminders for corrupt JSON', () {
+      final settings = AppSettings.fromMap(const {
+        SettingKeys.reminders: '{nope',
+      });
+
+      expect(settings.reminders, const ReminderSettings());
     });
 
     test('falls back to defaults for corrupt values', () {
@@ -70,6 +79,20 @@ void main() {
       final settings = await current();
       expect(settings.dailyGoalMl, 3000);
       expect(settings.avatarShape, AvatarShape.fish);
+    });
+
+    test('setReminders round-trips through storage', () async {
+      const reminders = ReminderSettings(
+        enabled: true,
+        startMinute: 7 * 60 + 30,
+        endMinute: 21 * 60,
+        intervalMinutes: 60,
+        weekdays: {DateTime.monday, DateTime.friday},
+      );
+
+      await actions.setReminders(reminders);
+
+      expect((await current()).reminders, reminders);
     });
 
     test('completeOnboarding stores the profile and marks it done', () async {

@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../data/repositories/settings_repository.dart';
 import '../../domain/goal.dart';
+import '../../domain/reminder_settings.dart';
 import '../avatar/avatar_shape.dart';
 
 part 'app_settings.freezed.dart';
@@ -12,6 +15,7 @@ abstract final class SettingKeys {
   static const weightKg = 'weightKg';
   static const activityLevel = 'activityLevel';
   static const onboardingDone = 'onboardingDone';
+  static const reminders = 'reminders';
 }
 
 const defaultDailyGoalMl = 2500;
@@ -23,6 +27,7 @@ abstract class AppSettings with _$AppSettings {
     @Default(AvatarShape.bottle) AvatarShape avatarShape,
     @Default(ActivityLevel.sedentary) ActivityLevel activity,
     @Default(false) bool onboardingDone,
+    @Default(ReminderSettings()) ReminderSettings reminders,
     double? weightKg,
   }) = _AppSettings;
 
@@ -36,8 +41,18 @@ abstract class AppSettings with _$AppSettings {
         ActivityLevel.values.asNameMap()[map[SettingKeys.activityLevel]] ??
         ActivityLevel.sedentary,
     onboardingDone: map[SettingKeys.onboardingDone] == 'true',
+    reminders: _parseReminders(map[SettingKeys.reminders]),
     weightKg: double.tryParse(map[SettingKeys.weightKg] ?? ''),
   );
+}
+
+ReminderSettings _parseReminders(String? raw) {
+  if (raw == null) return const ReminderSettings();
+  try {
+    return ReminderSettings.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+  } on Object {
+    return const ReminderSettings();
+  }
 }
 
 class SettingsActions {
@@ -50,6 +65,9 @@ class SettingsActions {
 
   Future<void> setAvatarShape(AvatarShape shape) =>
       _repository.set(SettingKeys.avatarShape, shape.name);
+
+  Future<void> setReminders(ReminderSettings reminders) =>
+      _repository.set(SettingKeys.reminders, jsonEncode(reminders.toJson()));
 
   Future<void> completeOnboarding({
     required int dailyGoalMl,
