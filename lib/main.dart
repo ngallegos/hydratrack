@@ -1,13 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'app_router.dart';
 import 'data/db/app_database.dart';
 import 'data/providers.dart';
 import 'data/repositories/category_repository.dart';
 import 'data/repositories/drink_repository.dart';
 import 'data/repositories/settings_repository.dart';
 import 'data/seed.dart';
-import 'features/home/home_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,12 +30,12 @@ Future<void> main() async {
   );
 }
 
-class HydraTrackApp extends StatelessWidget {
+class HydraTrackApp extends ConsumerWidget {
   const HydraTrackApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
+  Widget build(BuildContext context, WidgetRef ref) {
+    return MaterialApp.router(
       title: 'HydraTrack',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
@@ -46,7 +46,7 @@ class HydraTrackApp extends StatelessWidget {
           brightness: Brightness.dark,
         ),
       ),
-      home: const HomeScreen(),
+      routerConfig: ref.watch(routerProvider),
     );
   }
 }
