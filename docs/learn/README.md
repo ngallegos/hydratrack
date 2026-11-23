@@ -10,6 +10,7 @@ One note per build phase, plus an exercise where noted. Written for a C#/.NET de
 | 4 | [Configuration](04-config.md) — exercise: `suggestedDailyGoalMl` |
 | 5 | [History and stats](05-history.md) — exercise: `currentStreak` |
 | 6 | [Reminders](06-reminders.md) — exercise: `reminderSlots` |
+| 7 | [Sync](07-sync.md) — exercise: `remoteWins` |
 
 ## Toolchain cheatsheet
 
