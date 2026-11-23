@@ -1,0 +1,55 @@
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+coverage/
+pubspec_overrides.yaml
+doc/api/
+*.log
+
+# Android
+android/.gradle/
+android/captures/
+android/local.properties
+android/gradle-wrapper.jar
+android/app/debug/
+android/app/profile/
+android/app/release/
+android/app/.cxx/
+android/key.properties
+*.jks
+*.keystore
+GeneratedPluginRegistrant.*
+
+# Web
+web/.dart_tool/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/*
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets / OAuth config
+.env
+.env.*
+google-services.json
+client_secret*.json
+*.pem
+
+# Misc
+.history/
+.svn/
+.migrate_working_dir/
+migrate_working_dir/
