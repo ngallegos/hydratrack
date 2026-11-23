@@ -30,6 +30,27 @@ class SyncScreen extends ConsumerWidget {
       await controller.syncNow();
     }
 
+    final drive = ref.read(driveSignInProvider);
+
+    Future<void> signInToDrive() async {
+      final files = await drive.signIn();
+      if (files == null) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Google sign-in did not complete')),
+          );
+        }
+        return;
+      }
+      await actions.setSyncMode(SyncMode.drive);
+      await controller.syncNow();
+    }
+
+    Future<void> turnOff() async {
+      if (settings.syncMode == SyncMode.drive) await drive.signOut();
+      await actions.setSyncMode(SyncMode.off);
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('Sync')),
       body: ListView(
@@ -56,11 +77,21 @@ class SyncScreen extends ConsumerWidget {
                   : null,
               onTap: chooseFolder,
             ),
-          const ListTile(
-            leading: Icon(Icons.cloud_outlined),
-            title: Text('Google Drive'),
-            subtitle: Text('Not available yet'),
-            enabled: false,
+          ListTile(
+            key: const Key('drive-tile'),
+            leading: const Icon(Icons.cloud_outlined),
+            title: const Text('Google Drive'),
+            subtitle: Text(
+              drive.unavailableReason ??
+                  (settings.syncMode == SyncMode.drive
+                      ? 'Syncing through your private app folder'
+                      : 'Sign in only if you want this. Stored in a hidden app folder.'),
+            ),
+            trailing: settings.syncMode == SyncMode.drive
+                ? const Icon(Icons.check_circle)
+                : null,
+            enabled: drive.isAvailable,
+            onTap: signInToDrive,
           ),
           if (configured) ...[
             const Divider(),
@@ -83,7 +114,7 @@ class SyncScreen extends ConsumerWidget {
                   ),
                   const SizedBox(width: 8),
                   TextButton(
-                    onPressed: () => actions.setSyncMode(SyncMode.off),
+                    onPressed: turnOff,
                     child: const Text('Turn off sync'),
                   ),
                 ],

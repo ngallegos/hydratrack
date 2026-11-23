@@ -1,10 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hydratrack/data/sync/drive_files.dart';
 import 'package:hydratrack/data/sync/sync_service.dart';
 import 'package:hydratrack/features/settings/app_settings.dart';
 import 'package:hydratrack/features/settings/settings_providers.dart';
 import 'package:hydratrack/features/sync/sync_providers.dart';
 import 'package:hydratrack/features/sync/sync_screen.dart';
+import 'package:hydratrack/platform/drive_sign_in.dart';
 import 'package:hydratrack/platform/folder_picker.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -15,6 +17,35 @@ class _FakePicker implements FolderPicker {
 
   @override
   Future<String?> pickFolder() async => path;
+}
+
+class _FakeDriveFiles extends Fake implements DriveFiles {}
+
+class _FakeDriveSignIn implements DriveSignIn {
+  _FakeDriveSignIn({this.reason, this.succeeds = true});
+
+  final String? reason;
+  final bool succeeds;
+  var signIns = 0;
+  var signOuts = 0;
+
+  @override
+  String? get unavailableReason => reason;
+
+  @override
+  bool get isAvailable => reason == null;
+
+  @override
+  Future<DriveFiles?> restore() async => null;
+
+  @override
+  Future<DriveFiles?> signIn() async {
+    signIns++;
+    return succeeds ? _FakeDriveFiles() : null;
+  }
+
+  @override
+  Future<void> signOut() async => signOuts++;
 }
 
 class _FakeService extends Fake implements SyncService {
@@ -50,12 +81,16 @@ Widget _host(
   AppSettings settings = const AppSettings(),
   String? pickedPath,
   _FakeService? service,
+  DriveSignIn? drive,
 }) => ProviderScope(
   overrides: [
     appSettingsProvider.overrideWith((ref) => Stream.value(settings)),
     settingsActionsProvider.overrideWithValue(actions),
     folderPickerProvider.overrideWithValue(_FakePicker(pickedPath)),
     syncServiceProvider.overrideWithValue(service),
+    driveSignInProvider.overrideWithValue(
+      drive ?? _FakeDriveSignIn(reason: 'Needs a client id'),
+    ),
   ],
   child: const MaterialApp(home: SyncScreen()),
 );
@@ -66,15 +101,78 @@ const _folderSettings = AppSettings(
 );
 
 void main() {
-  testWidgets('offers folder sync, with Drive not yet available', (
+  testWidgets('offers folder sync and explains why Drive is unavailable', (
     tester,
   ) async {
     await tester.pumpWidget(_host(_FakeSettingsActions()));
     await tester.pumpAndSettle();
 
     expect(find.text('Shared folder'), findsOneWidget);
-    expect(find.text('Not available yet'), findsOneWidget);
+    expect(find.text('Needs a client id'), findsOneWidget);
     expect(find.text('Sync now'), findsNothing);
+  });
+
+  testWidgets('signing in to Drive selects it and syncs', (tester) async {
+    final actions = _FakeSettingsActions();
+    final drive = _FakeDriveSignIn();
+    final service = _FakeService();
+    await tester.pumpWidget(_host(actions, drive: drive, service: service));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('drive-tile')));
+    await tester.pumpAndSettle();
+
+    expect(drive.signIns, 1);
+    expect(actions.modes, [SyncMode.drive]);
+    expect(service.runs, 1);
+  });
+
+  testWidgets('a cancelled Drive sign-in changes nothing', (tester) async {
+    final actions = _FakeSettingsActions();
+    await tester.pumpWidget(
+      _host(actions, drive: _FakeDriveSignIn(succeeds: false)),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('drive-tile')));
+    await tester.pumpAndSettle();
+
+    expect(actions.modes, isEmpty);
+    expect(find.text('Google sign-in did not complete'), findsOneWidget);
+  });
+
+  testWidgets('turning off Drive sync also signs out', (tester) async {
+    final actions = _FakeSettingsActions();
+    final drive = _FakeDriveSignIn();
+    await tester.pumpWidget(
+      _host(
+        actions,
+        drive: drive,
+        settings: const AppSettings(syncMode: SyncMode.drive),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Turn off sync'));
+    await tester.pumpAndSettle();
+
+    expect(drive.signOuts, 1);
+    expect(actions.modes, [SyncMode.off]);
+  });
+
+  testWidgets('turning off folder sync does not sign out of Google', (
+    tester,
+  ) async {
+    final drive = _FakeDriveSignIn();
+    await tester.pumpWidget(
+      _host(_FakeSettingsActions(), drive: drive, settings: _folderSettings),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Turn off sync'));
+    await tester.pumpAndSettle();
+
+    expect(drive.signOuts, 0);
   });
 
   testWidgets('choosing a folder saves it and syncs straight away', (
