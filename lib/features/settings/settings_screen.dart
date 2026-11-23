@@ -48,6 +48,13 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const Divider(),
           ListTile(
+            title: const Text('Reminders'),
+            subtitle: Text(settings.reminders.enabled ? 'On' : 'Off'),
+            leading: const Icon(Icons.notifications_outlined),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/settings/reminders'),
+          ),
+          ListTile(
             title: const Text('Drink categories'),
             subtitle: const Text('Colors and hydration levels'),
             leading: const Icon(Icons.palette_outlined),
