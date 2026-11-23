@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'features/categories/categories_screen.dart';
 import 'features/drinks/drinks_screen.dart';
+import 'features/history/history_screen.dart';
 import 'features/home/home_screen.dart';
 import 'features/onboarding/onboarding_screen.dart';
 import 'features/settings/settings_providers.dart';
