@@ -9,6 +9,7 @@ import 'data/repositories/drink_repository.dart';
 import 'data/repositories/settings_repository.dart';
 import 'data/seed.dart';
 import 'features/reminders/reminder_providers.dart';
+import 'features/sync/sync_triggers.dart';
 import 'platform/create_reminder_scheduler.dart';
 
 Future<void> main() async {
@@ -30,7 +31,7 @@ Future<void> main() async {
         deviceIdProvider.overrideWithValue(deviceId),
         reminderSchedulerProvider.overrideWithValue(scheduler),
       ],
-      child: const HydraTrackApp(),
+      child: const SyncTriggers(child: HydraTrackApp()),
     ),
   );
 }

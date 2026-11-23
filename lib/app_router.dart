@@ -11,6 +11,7 @@ import 'features/reminders/reminders_screen.dart';
 import 'features/settings/settings_providers.dart';
 import 'features/settings/settings_screen.dart';
 import 'features/stats/stats_screen.dart';
+import 'features/sync/sync_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = ValueNotifier<int>(0);
@@ -45,6 +46,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, _) => const CategoriesScreen(),
           ),
           GoRoute(path: 'drinks', builder: (_, _) => const DrinksScreen()),
+          GoRoute(path: 'sync', builder: (_, _) => const SyncScreen()),
           GoRoute(
             path: 'reminders',
             builder: (_, _) => const RemindersScreen(),

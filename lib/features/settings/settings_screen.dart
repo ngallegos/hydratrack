@@ -48,6 +48,17 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const Divider(),
           ListTile(
+            title: const Text('Sync'),
+            subtitle: Text(switch (settings.syncMode) {
+              SyncMode.off => 'Off',
+              SyncMode.folder => 'Shared folder',
+              SyncMode.drive => 'Google Drive',
+            }),
+            leading: const Icon(Icons.sync),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/settings/sync'),
+          ),
+          ListTile(
             title: const Text('Reminders'),
             subtitle: Text(settings.reminders.enabled ? 'On' : 'Off'),
             leading: const Icon(Icons.notifications_outlined),
