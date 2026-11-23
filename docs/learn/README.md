@@ -7,6 +7,7 @@ One note per build phase, plus an exercise where noted. Written for a C#/.NET de
 | 1 | [Scaffold](01-scaffold.md) |
 | 2 | [Data layer](02-data.md) — exercise: `hydrationByCategory` |
 | 3 | [Home screen](03-home.md) — exercise: `StarredDrinkChip` |
+| 4 | [Configuration](04-config.md) — exercise: `suggestedDailyGoalMl` |
 
 ## Toolchain cheatsheet
 
