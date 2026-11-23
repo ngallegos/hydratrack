@@ -5,7 +5,7 @@
     <!-- Lets the user pick a shared folder (e.g. Syncthing) outside app storage -->
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
     <application
-        android:label="hydratrack"
+        android:label="HydraTrack"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
