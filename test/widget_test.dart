@@ -13,6 +13,8 @@ Widget _app({required bool onboardingDone}) => ProviderScope(
     ),
     categoriesProvider.overrideWith((ref) => Stream.value([])),
     starredDrinksProvider.overrideWith((ref) => Stream.value([])),
+    todayProvider.overrideWith((ref) => Stream.value(DateTime(2026, 11, 23))),
+    todayEntriesProvider.overrideWith((ref) => Stream.value([])),
     todayHydrationProvider.overrideWithValue(const {}),
   ],
   child: const HydraTrackApp(),

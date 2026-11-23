@@ -8,6 +8,8 @@ import 'data/repositories/category_repository.dart';
 import 'data/repositories/drink_repository.dart';
 import 'data/repositories/settings_repository.dart';
 import 'data/seed.dart';
+import 'features/reminders/reminder_providers.dart';
+import 'platform/create_reminder_scheduler.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,11 +21,14 @@ Future<void> main() async {
     DrinkRepository(db, deviceId: deviceId),
   );
 
+  final scheduler = await createReminderScheduler();
+
   runApp(
     ProviderScope(
       overrides: [
         databaseProvider.overrideWithValue(db),
         deviceIdProvider.overrideWithValue(deviceId),
+        reminderSchedulerProvider.overrideWithValue(scheduler),
       ],
       child: const HydraTrackApp(),
     ),
@@ -35,6 +40,7 @@ class HydraTrackApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(reminderSyncProvider);
     return MaterialApp.router(
       title: 'HydraTrack',
       theme: ThemeData(
