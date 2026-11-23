@@ -5,11 +5,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/providers.dart';
 import '../../data/sync/directory_backend.dart';
+import '../../data/sync/drive_backend.dart';
 import '../../data/sync/sync_backend.dart';
 import '../../data/sync/sync_service.dart';
 import '../../data/sync/sync_store.dart';
+import '../../platform/drive_sign_in.dart';
 import '../settings/app_settings.dart';
 import '../settings/settings_providers.dart';
+
+final driveSignInProvider = Provider<DriveSignIn>((ref) => GoogleDriveSignIn());
 
 /// Overridden in tests; the default builds a backend from settings.
 final syncBackendProvider = Provider<SyncBackend?>((ref) {
@@ -22,6 +26,7 @@ final syncBackendProvider = Provider<SyncBackend?>((ref) {
     SyncMode.folder when !kIsWeb && folder != null => DirectoryBackend(
       Directory(folder),
     ),
+    SyncMode.drive => DriveBackend(ref.read(driveSignInProvider).restore),
     _ => null,
   };
 });
