@@ -11,11 +11,13 @@ Future<void> logDrink(
   required String categoryId,
   required String categoryName,
   required int volumeMl,
+  DateTime? at,
 }) async {
   final repository = ref.read(logRepositoryProvider);
   final entry = await repository.add(
     categoryId: categoryId,
     volumeMl: volumeMl,
+    at: at,
   );
   if (!context.mounted) return;
 

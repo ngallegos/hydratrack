@@ -2,27 +2,51 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/format.dart';
+import '../../data/providers.dart';
 import '../../domain/drink_category.dart';
+import '../../domain/log_entry.dart';
 import '../home/home_providers.dart';
 import 'log_actions.dart';
 
-Future<void> showLogSheet(BuildContext context) => showModalBottomSheet<void>(
+/// Logs a drink now. Pass [day] to back-date a new entry to that day, or
+/// [existing] to edit an entry; both show a time picker.
+Future<void> showLogSheet(
+  BuildContext context, {
+  DateTime? day,
+  LogEntry? existing,
+}) => showModalBottomSheet<void>(
   context: context,
   isScrollControlled: true,
   showDragHandle: true,
-  builder: (_) => const LogSheet(),
+  builder: (_) => LogSheet(day: day, existing: existing),
 );
 
 class LogSheet extends ConsumerStatefulWidget {
-  const LogSheet({super.key});
+  const LogSheet({this.day, this.existing, super.key});
+
+  final DateTime? day;
+  final LogEntry? existing;
 
   @override
   ConsumerState<LogSheet> createState() => _LogSheetState();
 }
 
 class _LogSheetState extends ConsumerState<LogSheet> {
-  String? _categoryId;
-  double _volumeMl = 250;
+  late String? _categoryId = widget.existing?.categoryId;
+  late double _volumeMl = (widget.existing?.volumeMl ?? 250).toDouble();
+  late TimeOfDay _time = TimeOfDay.fromDateTime(
+    widget.existing?.loggedAt ?? DateTime.now(),
+  );
+
+  bool get _showsTime => widget.day != null || widget.existing != null;
+
+  DateTime get _loggedDay {
+    final base = widget.existing?.loggedAt ?? widget.day ?? DateTime.now();
+    return DateTime(base.year, base.month, base.day);
+  }
+
+  DateTime get _loggedAt =>
+      _loggedDay.copyWith(hour: _time.hour, minute: _time.minute);
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +64,10 @@ class _LogSheetState extends ConsumerState<LogSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Log a drink', style: Theme.of(context).textTheme.titleLarge),
+          Text(
+            widget.existing == null ? 'Log a drink' : 'Edit entry',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
           const SizedBox(height: 16),
           Wrap(
             spacing: 8,
@@ -72,10 +99,17 @@ class _LogSheetState extends ConsumerState<LogSheet> {
             label: formatMl(_volumeMl.round()),
             onChanged: (v) => setState(() => _volumeMl = v),
           ),
+          if (_showsTime)
+            ListTile(
+              key: const Key('time-tile'),
+              leading: const Icon(Icons.schedule),
+              title: Text(_time.format(context)),
+              onTap: _pickTime,
+            ),
           const SizedBox(height: 8),
           FilledButton(
             onPressed: selected == null ? null : () => _submit(selected),
-            child: const Text('Log'),
+            child: Text(widget.existing == null ? 'Log' : 'Save'),
           ),
         ],
       ),
@@ -90,15 +124,34 @@ class _LogSheetState extends ConsumerState<LogSheet> {
     );
   }
 
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(context: context, initialTime: _time);
+    if (picked != null) setState(() => _time = picked);
+  }
+
   Future<void> _submit(DrinkCategory category) async {
     final navigator = Navigator.of(context);
-    await logDrink(
-      context,
-      ref,
-      categoryId: category.id,
-      categoryName: category.name,
-      volumeMl: _volumeMl.round(),
-    );
+    final existing = widget.existing;
+    if (existing != null) {
+      await ref
+          .read(logRepositoryProvider)
+          .update(
+            existing.copyWith(
+              categoryId: category.id,
+              volumeMl: _volumeMl.round(),
+              loggedAt: _loggedAt,
+            ),
+          );
+    } else {
+      await logDrink(
+        context,
+        ref,
+        categoryId: category.id,
+        categoryName: category.name,
+        volumeMl: _volumeMl.round(),
+        at: _showsTime ? _loggedAt : null,
+      );
+    }
     navigator.pop();
   }
 }
