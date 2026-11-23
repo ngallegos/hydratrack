@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'features/categories/categories_screen.dart';
+import 'features/drinks/drinks_screen.dart';
 import 'features/home/home_screen.dart';
 import 'features/settings/settings_screen.dart';
 
@@ -17,6 +18,7 @@ final routerProvider = Provider<GoRouter>(
             path: 'categories',
             builder: (_, _) => const CategoriesScreen(),
           ),
+          GoRoute(path: 'drinks', builder: (_, _) => const DrinksScreen()),
         ],
       ),
     ],
