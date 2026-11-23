@@ -59,6 +59,13 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => context.push('/settings/sync'),
           ),
           ListTile(
+            title: const Text('Backup & export'),
+            subtitle: const Text('Save, restore or export to CSV'),
+            leading: const Icon(Icons.save_alt),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/settings/backup'),
+          ),
+          ListTile(
             title: const Text('Reminders'),
             subtitle: Text(settings.reminders.enabled ? 'On' : 'Off'),
             leading: const Icon(Icons.notifications_outlined),

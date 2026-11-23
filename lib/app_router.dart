@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'features/backup/backup_screen.dart';
 import 'features/categories/categories_screen.dart';
 import 'features/drinks/drinks_screen.dart';
 import 'features/history/history_screen.dart';
@@ -47,6 +48,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(path: 'drinks', builder: (_, _) => const DrinksScreen()),
           GoRoute(path: 'sync', builder: (_, _) => const SyncScreen()),
+          GoRoute(path: 'backup', builder: (_, _) => const BackupScreen()),
           GoRoute(
             path: 'reminders',
             builder: (_, _) => const RemindersScreen(),
