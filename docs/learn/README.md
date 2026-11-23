@@ -11,6 +11,7 @@ One note per build phase, plus an exercise where noted. Written for a C#/.NET de
 | 5 | [History and stats](05-history.md) — exercise: `currentStreak` |
 | 6 | [Reminders](06-reminders.md) — exercise: `reminderSlots` |
 | 7 | [Sync](07-sync.md) — exercise: `remoteWins` |
+| 8 | [Backup, export and PWA](08-backup-and-pwa.md) |
 
 ## Toolchain cheatsheet
 
