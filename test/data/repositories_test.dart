@@ -119,6 +119,29 @@ void main() {
       expect(today.single.deviceId, 'dev');
     });
 
+    test('watchSince returns live entries from the start day onward', () async {
+      await logs.add(
+        categoryId: 'water',
+        volumeMl: 100,
+        at: DateTime(2026, 11, 1),
+      );
+      await logs.add(
+        categoryId: 'water',
+        volumeMl: 200,
+        at: DateTime(2026, 11, 20),
+      );
+      final deleted = await logs.add(
+        categoryId: 'water',
+        volumeMl: 300,
+        at: DateTime(2026, 11, 21),
+      );
+      await logs.softDelete(deleted.id);
+
+      final entries = await logs.watchSince(DateTime(2026, 11, 10)).first;
+
+      expect(entries.map((e) => e.volumeMl), [200]);
+    });
+
     test('softDelete supports undo via restore', () async {
       final entry = await logs.add(categoryId: 'water', volumeMl: 250);
 

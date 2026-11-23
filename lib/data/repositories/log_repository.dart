@@ -33,6 +33,15 @@ class LogRepository {
     return query.watch().map((rows) => rows.map((r) => r.toDomain()).toList());
   }
 
+  Stream<List<LogEntry>> watchSince(DateTime start) {
+    final query = _db.select(_db.logEntries)
+      ..where(
+        (e) => e.deleted.equals(false) & e.loggedAt.isBiggerOrEqualValue(start),
+      )
+      ..orderBy([(e) => OrderingTerm.asc(e.loggedAt)]);
+    return query.watch().map((rows) => rows.map((r) => r.toDomain()).toList());
+  }
+
   Future<LogEntry> add({
     required String categoryId,
     required int volumeMl,
