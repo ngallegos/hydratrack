@@ -38,5 +38,6 @@ Until an ID is set, the Drive option shows "not set up in this build" and everyt
 
 ## Limitations
 
-- Android only for now; web sign-in needs Google's browser button flow, which isn't implemented.
-- Not yet tested against a real Google account.
+- Android only for now; web sign-in needs Google's browser button flow:
+  [#13](https://github.com/ngallegos/hydratrack/issues/13).
+- Creating the OAuth clients and testing against a real Google account: [#3](https://github.com/ngallegos/hydratrack/issues/3).

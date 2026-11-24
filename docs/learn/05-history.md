@@ -45,8 +45,9 @@ tree". Because our delete is a soft delete, the stream drops it immediately, and
 from them. Prefer this over three near-identical widgets, but split it once the branches outnumber the shared code.
 
 ## Known simplifications
-- Goal days use today's goal for every past day. Changing the goal rewrites past streaks.
-- Stats look back 365 days.
+- Goal days use today's goal for every past day, so changing the goal rewrites past streaks:
+  [#5](https://github.com/ngallegos/hydratrack/issues/5).
+- Stats look back 365 days. This is a design choice, not tracked work.
 
 ## Docs
 - [Riverpod Notifier](https://riverpod.dev/docs/concepts2/providers)

@@ -41,10 +41,10 @@ Inject a `clock` function (`DateTime Function()`) instead of calling `DateTime.n
 `createReminderScheduler` catches plugin failures and returns a no-op, so a notification problem can never stop the app from
 launching. Optional features should degrade, not crash.
 
-## Not done yet
-- A "log my starred drink" button on the notification. It needs a background isolate that opens the same database. Planned
-  as a follow-up after sync.
-- None of the Android code has run on a device yet; install the Android SDK (platform 37) and try `flutter run`.
+## Tracked follow-ups
+- A "log my starred drink" button on the notification. It needs a background isolate that opens the same database:
+  [#9](https://github.com/ngallegos/hydratrack/issues/9).
+- None of the Android code has run on a device yet: [#4](https://github.com/ngallegos/hydratrack/issues/4).
 
 ## Docs
 - [flutter_local_notifications](https://pub.dev/packages/flutter_local_notifications)
