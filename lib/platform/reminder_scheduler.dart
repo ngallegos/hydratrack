@@ -1,6 +1,19 @@
+enum PermissionResult {
+  granted,
+
+  /// The user (or an earlier choice) blocked notifications.
+  denied,
+
+  /// The prompt was closed without choosing.
+  dismissed,
+
+  /// This browser, device or address can't show notifications at all.
+  unsupported,
+}
+
 abstract interface class ReminderScheduler {
   /// Asks the OS/browser for notification permission. Call from a user action.
-  Future<bool> requestPermission();
+  Future<PermissionResult> requestPermission();
 
   /// Cancels everything scheduled earlier and schedules [times] instead.
   Future<void> replaceAll(List<DateTime> times);
@@ -10,7 +23,8 @@ class NoopReminderScheduler implements ReminderScheduler {
   const NoopReminderScheduler();
 
   @override
-  Future<bool> requestPermission() async => false;
+  Future<PermissionResult> requestPermission() async =>
+      PermissionResult.unsupported;
 
   @override
   Future<void> replaceAll(List<DateTime> times) async {}

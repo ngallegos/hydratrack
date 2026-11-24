@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hydratrack/platform/reminder_scheduler.dart';
 import 'package:hydratrack/platform/web_reminder_scheduler.dart';
 
 void main() {
@@ -10,7 +11,7 @@ void main() {
     shown.clear();
     scheduler = WebReminderScheduler(
       show: (id) async => shown.add(id),
-      requestPermission: () async => true,
+      requestPermission: () async => PermissionResult.granted,
       clock: () => now,
     );
   });
@@ -67,7 +68,7 @@ void main() {
   ) async {
     final failing = WebReminderScheduler(
       show: (id) async => throw StateError('permission missing'),
-      requestPermission: () async => false,
+      requestPermission: () async => PermissionResult.denied,
       clock: () => now,
     );
     await failing.replaceAll([now.add(const Duration(minutes: 5))]);
@@ -78,6 +79,6 @@ void main() {
   });
 
   test('requestPermission delegates', () async {
-    expect(await scheduler.requestPermission(), isTrue);
+    expect(await scheduler.requestPermission(), PermissionResult.granted);
   });
 }

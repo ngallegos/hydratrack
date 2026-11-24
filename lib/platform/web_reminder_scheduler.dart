@@ -15,22 +15,34 @@ class WebReminderScheduler implements ReminderScheduler {
   }) : _now = clock ?? DateTime.now;
 
   final Future<void> Function(int id) _show;
-  final Future<bool> Function() _requestPermission;
+  final Future<PermissionResult> Function() _requestPermission;
   final DateTime Function() _now;
   final _timers = <Timer>[];
 
   static Future<WebReminderScheduler> create() async {
     final plugin = FlutterLocalNotificationsPlugin();
-    await plugin.initialize(
+    final initialized = await plugin.initialize(
       settings: const InitializationSettings(web: WebInitializationSettings()),
     );
     final web = plugin
         .resolvePlatformSpecificImplementation<
           WebFlutterLocalNotificationsPlugin
         >();
+
+    // initialize() is false when the browser lacks the Notification API or
+    // service workers, which also happens on non-secure (plain http,
+    // non-localhost) addresses.
+    final usable = initialized == true && web != null;
+
     return WebReminderScheduler(
-      requestPermission: () async =>
-          await web?.requestNotificationsPermission() ?? false,
+      requestPermission: () async {
+        if (!usable) return PermissionResult.unsupported;
+        final granted = await web.requestNotificationsPermission();
+        if (granted == true) return PermissionResult.granted;
+        return web.permissionStatus == WebNotificationPermission.denied
+            ? PermissionResult.denied
+            : PermissionResult.dismissed;
+      },
       show: (id) => plugin.show(
         id: id,
         title: reminderTitle,
@@ -43,7 +55,7 @@ class WebReminderScheduler implements ReminderScheduler {
   }
 
   @override
-  Future<bool> requestPermission() => _requestPermission();
+  Future<PermissionResult> requestPermission() => _requestPermission();
 
   @override
   Future<void> replaceAll(List<DateTime> times) async {
