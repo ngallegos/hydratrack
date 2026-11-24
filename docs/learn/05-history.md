@@ -1,11 +1,11 @@
 # 05 — History, stats and streaks
 
-## Exercise
+## Exercise (done)
 
-Implement `currentStreak` in `lib/domain/streaks.dart`. The rules are in the comment above it, and `longestStreak`
-right below is a worked example of walking dates. Run `flutter test test/domain/streaks_test.dart`.
+`currentStreak` in `lib/domain/streaks.dart` is implemented and covered by `test/domain/streaks_test.dart`. The rules
+are in the comment above it, and `longestStreak` right below is a worked example of walking dates.
 
-Hints:
+Hints that were given:
 - Start at `dateOnly(today)`. If that day is not in `goalDays`, start from `previousDay(...)` instead
 - Loop while the current day is in the set, count, step back
 - `Set.contains` on `DateTime` compares the instant, so every value must be date-only (midnight local); that's what
@@ -13,8 +13,6 @@ Hints:
 - Why `DateTime(y, m, d - 1)` and not `day.subtract(Duration(days: 1))`? On a daylight-saving day a "day" is 23 or
   25 hours, so subtracting 24h can land on the wrong date. The constructor normalises overflow (`d - 1 == 0` becomes the
   last day of the previous month)
-
-When it passes, the `buildStatsData` test and the live Stats screen start working.
 
 ## Concepts
 

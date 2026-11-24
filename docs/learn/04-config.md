@@ -1,12 +1,12 @@
 # 04 — Configuration: settings, editors, onboarding
 
-## Exercise
+## Exercise (done)
 
-Implement `suggestedDailyGoalMl` in `lib/domain/goal.dart`. The formula and rules are in the comment above
-it. Run `flutter test test/domain/goal_test.dart`. When it passes, the onboarding "Suggest my goal" test
-(`test/features/onboarding/onboarding_screen_test.dart`) should pass too.
+`suggestedDailyGoalMl` in `lib/domain/goal.dart` is implemented and covered by `test/domain/goal_test.dart`; the
+onboarding "Suggest my goal" test (`test/features/onboarding/onboarding_screen_test.dart`) exercises it too. The formula
+and rules are in the comment above it.
 
-Hints:
+Hints that were given:
 - `weightKg * mlPerKg * activity.multiplier` gives a `double`
 - Round to a step: `(value / step).round() * step`
 - `num.clamp(min, max)` returns `num`; use `.toInt()` or keep the types as `int` by clamping after rounding

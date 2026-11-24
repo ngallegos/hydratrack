@@ -1,10 +1,10 @@
 # 02 — Data layer
 
-## Exercise
+## Exercise (done)
 
-Implement `hydrationByCategory` in `lib/domain/hydration.dart`. Run `flutter test test/domain/hydration_test.dart` until green.
+`hydrationByCategory` in `lib/domain/hydration.dart` is implemented and covered by `test/domain/hydration_test.dart`.
 
-Hints:
+Hints that were given:
 - `Map<String, double>` with a loop and `result[id] = (result[id] ?? 0) + ml` (`??` is null-coalescing, same as C#)
 - Or `putIfAbsent` / `update(key, (v) => v + x, ifAbsent: () => x)`
 - Look up the category with `categoriesById[entry.categoryId]`; a map lookup returns `T?`, so check for `null` first. Dart promotes a local `final` variable to non-null after the check, like C# flow analysis

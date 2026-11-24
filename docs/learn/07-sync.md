@@ -1,18 +1,15 @@
 # 07 — Sync
 
-## Exercise
+## Exercise (done)
 
-Implement `remoteWins` in `lib/data/sync/last_write_wins.dart`. The rules are in the comment above it. Run
-`flutter test test/data/sync/last_write_wins_test.dart`. Afterwards the end-to-end test in
-`test/data/sync/sync_service_test.dart` ("works end to end with the real last-write-wins rule") should pass too.
+`remoteWins` in `lib/data/sync/last_write_wins.dart` is implemented and covered by
+`test/data/sync/last_write_wins_test.dart`; the end-to-end test in `test/data/sync/sync_service_test.dart` ("works end to
+end with the real last-write-wins rule") exercises it too. The rules are in the comment above it.
 
-Hints:
+Hints that were given:
 - `DateTime.compareTo` returns negative, zero or positive, like C#'s `CompareTo`
 - `String.compareTo` works the same way and compares code units
 - Compare timestamps first; only when they are equal compare device ids
-
-Until it is done, sync still publishes your data and copies *new* records from other devices, but it can't pick a winner when
-two devices hold different versions of the same record, so the app throws on that path.
 
 ## Design
 
