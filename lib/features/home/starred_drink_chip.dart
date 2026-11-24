@@ -1,20 +1,9 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/format.dart';
 import '../../domain/drink.dart';
 import '../../domain/drink_category.dart';
 
-// EXERCISE: make the quick-log chip show the drink's volume and category color.
-//
-// Today it only shows the drink name. Requirements (see
-// test/features/home/starred_drink_chip_test.dart):
-//  - label reads "<name> · <volume>", e.g. "Glass of water · 250 ml"
-//    (use formatMl from lib/core/format.dart)
-//  - a small round dot in the category color sits before the label; give it
-//    Key('category-dot') and the color Color(category.colorValue)
-//  - tapping the chip calls onTap
-//
-// Hints: ActionChip takes `avatar` and `label` widgets; a Container with
-// BoxDecoration(shape: BoxShape.circle, color: ...) makes a dot.
 class StarredDrinkChip extends StatelessWidget {
   const StarredDrinkChip({
     required this.drink,
@@ -29,6 +18,21 @@ class StarredDrinkChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ActionChip(label: Text(drink.name), onPressed: onTap);
+    final label = '${drink.name} · ${formatMl(drink.volumeMl)}';
+    // Scale the dot with the user's font-size setting.
+    final dotSize = MediaQuery.textScalerOf(context).scale(12);
+    final avatar = Semantics(
+      label: category.name,
+      child: Container(
+        key: const Key('category-dot'),
+        width: dotSize,
+        height: dotSize,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Color(category.colorValue),
+        ),
+      ),
+    );
+    return ActionChip(avatar: avatar, label: Text(label), onPressed: onTap);
   }
 }
