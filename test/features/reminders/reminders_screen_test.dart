@@ -17,14 +17,16 @@ class _FakeSettingsActions extends Fake implements SettingsActions {
 }
 
 class _FakeScheduler implements ReminderScheduler {
-  _FakeScheduler({this.grants = true});
+  _FakeScheduler({this.grants = true, this.throws = false});
 
-  final bool grants;
+  bool grants;
+  final bool throws;
   var permissionRequests = 0;
 
   @override
   Future<bool> requestPermission() async {
     permissionRequests++;
+    if (throws) throw StateError('Notification API missing');
     return grants;
   }
 
@@ -32,10 +34,16 @@ class _FakeScheduler implements ReminderScheduler {
   Future<void> replaceAll(List<DateTime> times) async {}
 }
 
+class _BlockedAccess extends NotificationAccessController {
+  @override
+  NotificationAccess build() => NotificationAccess.unavailable;
+}
+
 Widget _host(
   _FakeSettingsActions actions,
   _FakeScheduler scheduler, {
   ReminderSettings reminders = const ReminderSettings(),
+  bool startBlocked = false,
 }) => ProviderScope(
   overrides: [
     appSettingsProvider.overrideWith(
@@ -43,6 +51,8 @@ Widget _host(
     ),
     settingsActionsProvider.overrideWithValue(actions),
     reminderSchedulerProvider.overrideWithValue(scheduler),
+    if (startBlocked)
+      notificationAccessProvider.overrideWith(_BlockedAccess.new),
   ],
   child: const MaterialApp(home: RemindersScreen()),
 );
@@ -61,7 +71,11 @@ void main() {
     expect(actions.saved.single.enabled, isTrue);
   });
 
-  testWidgets('denied permission leaves reminders off and explains', (
+  NotificationAccess accessOf(WidgetTester tester) =>
+      ProviderScope.containerOf(tester.element(find.byType(RemindersScreen)))
+          .read(notificationAccessProvider);
+
+  testWidgets('the switch still turns on when permission is denied', (
     tester,
   ) async {
     final actions = _FakeSettingsActions();
@@ -71,11 +85,64 @@ void main() {
     await tester.tap(find.byType(Switch));
     await tester.pumpAndSettle();
 
-    expect(actions.saved, isEmpty);
-    expect(
-      find.text('Notifications are blocked for HydraTrack'),
-      findsOneWidget,
+    expect(actions.saved.single.enabled, isTrue);
+    expect(accessOf(tester), NotificationAccess.unavailable);
+  });
+
+  testWidgets('the switch still turns on when the platform throws', (
+    tester,
+  ) async {
+    final actions = _FakeSettingsActions();
+    await tester.pumpWidget(_host(actions, _FakeScheduler(throws: true)));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(Switch));
+    await tester.pumpAndSettle();
+
+    expect(actions.saved.single.enabled, isTrue);
+    expect(accessOf(tester), NotificationAccess.unavailable);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('granted permission is recorded', (tester) async {
+    await tester.pumpWidget(_host(_FakeSettingsActions(), _FakeScheduler()));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(Switch));
+    await tester.pumpAndSettle();
+
+    expect(accessOf(tester), NotificationAccess.granted);
+  });
+
+  testWidgets('explains a blocked permission and lets the user retry', (
+    tester,
+  ) async {
+    final scheduler = _FakeScheduler();
+    await tester.pumpWidget(
+      _host(
+        _FakeSettingsActions(),
+        scheduler,
+        reminders: const ReminderSettings(enabled: true),
+        startBlocked: true,
+      ),
     );
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('notifications-blocked')), findsOneWidget);
+
+    await tester.tap(find.text('Try again'));
+    await tester.pumpAndSettle();
+
+    expect(scheduler.permissionRequests, 1);
+    expect(find.byKey(const Key('notifications-blocked')), findsNothing);
+  });
+
+  testWidgets('no warning while reminders are off', (tester) async {
+    await tester.pumpWidget(
+      _host(_FakeSettingsActions(), _FakeScheduler(), startBlocked: true),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('notifications-blocked')), findsNothing);
   });
 
   testWidgets('disabling does not ask for permission', (tester) async {

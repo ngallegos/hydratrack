@@ -26,6 +26,7 @@ class RemindersScreen extends ConsumerWidget {
         ref.watch(appSettingsProvider).value?.reminders ??
         const ReminderSettings();
     final actions = ref.read(settingsActionsProvider);
+    final access = ref.watch(notificationAccessProvider);
 
     String timeLabel(int minute) =>
         TimeOfDay(hour: minute ~/ 60, minute: minute % 60).format(context);
@@ -56,19 +57,7 @@ class RemindersScreen extends ConsumerWidget {
 
     Future<void> toggle(bool enable) async {
       if (enable) {
-        final granted = await ref
-            .read(reminderSchedulerProvider)
-            .requestPermission();
-        if (!granted) {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Notifications are blocked for HydraTrack'),
-              ),
-            );
-          }
-          return;
-        }
+        await ref.read(notificationAccessProvider.notifier).request();
       }
       await actions.setReminders(reminders.copyWith(enabled: enable));
     }
@@ -83,6 +72,22 @@ class RemindersScreen extends ConsumerWidget {
             value: reminders.enabled,
             onChanged: toggle,
           ),
+          if (reminders.enabled && access == NotificationAccess.unavailable)
+            ListTile(
+              key: const Key('notifications-blocked'),
+              leading: const Icon(Icons.notifications_off_outlined),
+              title: const Text('Notifications are blocked here'),
+              subtitle: const Text(
+                'Reminders are on but nothing will appear until you allow '
+                'notifications for HydraTrack in your browser or device '
+                'settings.',
+              ),
+              trailing: TextButton(
+                onPressed: () =>
+                    ref.read(notificationAccessProvider.notifier).request(),
+                child: const Text('Try again'),
+              ),
+            ),
           ListTile(
             enabled: reminders.enabled,
             title: const Text('First reminder'),
