@@ -1,12 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../../core/format.dart';
 import '../../data/providers.dart';
 import '../../domain/drink_category.dart';
 import '../../domain/log_entry.dart';
 import '../home/home_providers.dart';
 import 'log_actions.dart';
+import '../settings/settings_providers.dart';
 
 /// Logs a drink now. Pass [day] to back-date a new entry to that day, or
 /// [existing] to edit an entry; both show a time picker.
@@ -33,7 +33,7 @@ class LogSheet extends ConsumerStatefulWidget {
 
 class _LogSheetState extends ConsumerState<LogSheet> {
   late String? _categoryId = widget.existing?.categoryId;
-  late double _volumeMl = (widget.existing?.volumeMl ?? 250).toDouble();
+  late int _volumeMl = widget.existing?.volumeMl ?? 250;
   late TimeOfDay _time = TimeOfDay.fromDateTime(
     widget.existing?.loggedAt ?? DateTime.now(),
   );
@@ -51,6 +51,8 @@ class _LogSheetState extends ConsumerState<LogSheet> {
   @override
   Widget build(BuildContext context) {
     final categories = ref.watch(categoriesProvider).value ?? const [];
+    final unit = ref.watch(volumeUnitProvider);
+    final spec = unit.volumeSlider;
     final selected = _selectedCategory(categories);
 
     return Padding(
@@ -87,17 +89,17 @@ class _LogSheetState extends ConsumerState<LogSheet> {
           ),
           const SizedBox(height: 16),
           Text(
-            formatMl(_volumeMl.round()),
+            unit.format(_volumeMl),
             style: Theme.of(context).textTheme.headlineSmall,
             textAlign: TextAlign.center,
           ),
           Slider(
-            value: _volumeMl,
-            min: 50,
-            max: 1000,
-            divisions: 19,
-            label: formatMl(_volumeMl.round()),
-            onChanged: (v) => setState(() => _volumeMl = v),
+            value: unit.fromMl(_volumeMl).clamp(spec.min, spec.max),
+            min: spec.min,
+            max: spec.max,
+            divisions: spec.divisions,
+            label: unit.format(_volumeMl),
+            onChanged: (v) => setState(() => _volumeMl = unit.toMl(v)),
           ),
           if (_showsTime)
             ListTile(
@@ -138,7 +140,7 @@ class _LogSheetState extends ConsumerState<LogSheet> {
           .update(
             existing.copyWith(
               categoryId: category.id,
-              volumeMl: _volumeMl.round(),
+              volumeMl: _volumeMl,
               loggedAt: _loggedAt,
             ),
           );
@@ -148,7 +150,7 @@ class _LogSheetState extends ConsumerState<LogSheet> {
         ref,
         categoryId: category.id,
         categoryName: category.name,
-        volumeMl: _volumeMl.round(),
+        volumeMl: _volumeMl,
         at: _showsTime ? _loggedAt : null,
       );
     }

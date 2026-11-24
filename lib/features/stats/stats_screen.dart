@@ -2,10 +2,11 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../../core/format.dart';
 import '../../domain/stats.dart';
+import '../../domain/volume_unit.dart';
 import '../../domain/streaks.dart';
 import '../home/home_providers.dart';
+import '../settings/settings_providers.dart';
 import 'stats_providers.dart';
 
 enum StatsRange {
@@ -31,6 +32,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
   @override
   Widget build(BuildContext context) {
     final stats = ref.watch(statsDataProvider);
+    final unit = ref.watch(volumeUnitProvider);
     final today = ref.watch(todayProvider).value ?? dateOnly(DateTime.now());
 
     return Scaffold(
@@ -60,7 +62,12 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                _Summary(stats: stats, today: today, days: _range.days),
+                _Summary(
+                  stats: stats,
+                  today: today,
+                  days: _range.days,
+                  unit: unit,
+                ),
                 const SizedBox(height: 24),
                 Text(
                   'Achievements',
@@ -166,11 +173,13 @@ class _Summary extends StatelessWidget {
     required this.stats,
     required this.today,
     required this.days,
+    required this.unit,
   });
 
   final StatsData stats;
   final DateTime today;
   final int days;
+  final VolumeUnit unit;
 
   @override
   Widget build(BuildContext context) {
@@ -197,7 +206,7 @@ class _Summary extends StatelessWidget {
 
     return Row(
       children: [
-        tile('Daily average', formatMl((totalMl / days).round())),
+        tile('Daily average', unit.format(totalMl / days)),
         tile('Goal met', '$goalDays / $days days'),
         tile('Current streak', '${stats.currentStreak}'),
         tile('Best streak', '${stats.longestStreak}'),

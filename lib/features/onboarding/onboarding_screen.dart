@@ -2,8 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../../core/format.dart';
 import '../../domain/goal.dart';
+import '../../domain/volume_unit.dart';
 import '../settings/app_settings.dart';
 import '../settings/settings_providers.dart';
 
@@ -30,6 +30,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final unit = ref.watch(volumeUnitProvider);
+    final spec = unit.goalSlider;
     return Scaffold(
       body: SafeArea(
         child: ListView(
@@ -42,6 +44,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               'or tell us a bit about you and we will suggest one.',
             ),
             const SizedBox(height: 24),
+            SegmentedButton<VolumeUnit>(
+              segments: [
+                for (final option in VolumeUnit.values)
+                  ButtonSegment(value: option, label: Text(option.label)),
+              ],
+              selected: {unit},
+              onSelectionChanged: (s) =>
+                  ref.read(settingsActionsProvider).setVolumeUnit(s.single),
+            ),
+            const SizedBox(height: 16),
             TextField(
               controller: _weight,
               keyboardType: const TextInputType.numberWithOptions(
@@ -74,16 +86,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              formatMl(_goalMl.round()),
+              unit.format(_goalMl),
               style: textTheme.headlineMedium,
               textAlign: TextAlign.center,
             ),
             Slider(
-              value: _goalMl,
-              min: minGoalMl.toDouble(),
-              max: maxGoalMl.toDouble(),
-              divisions: (maxGoalMl - minGoalMl) ~/ goalStepMl,
-              onChanged: (v) => setState(() => _goalMl = v),
+              value: unit.fromMl(_goalMl).clamp(spec.min, spec.max),
+              min: spec.min,
+              max: spec.max,
+              divisions: spec.divisions,
+              onChanged: (v) =>
+                  setState(() => _goalMl = unit.toMl(v).toDouble()),
             ),
             const SizedBox(height: 16),
             FilledButton(onPressed: _start, child: const Text('Start')),

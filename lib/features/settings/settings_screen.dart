@@ -2,8 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../../core/format.dart';
 import '../../domain/goal.dart';
+import '../../domain/volume_unit.dart';
 import '../avatar/avatar_shape.dart';
 import 'app_settings.dart';
 import 'settings_providers.dart';
@@ -22,10 +22,30 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         children: [
           ListTile(
+            title: const Text('Units'),
+            leading: const Icon(Icons.straighten),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: SegmentedButton<VolumeUnit>(
+                segments: [
+                  for (final unit in VolumeUnit.values)
+                    ButtonSegment(value: unit, label: Text(unit.label)),
+                ],
+                selected: {settings.volumeUnit},
+                onSelectionChanged: (s) => actions.setVolumeUnit(s.single),
+              ),
+            ),
+          ),
+          ListTile(
             title: const Text('Daily goal'),
-            subtitle: Text(formatMl(settings.dailyGoalMl)),
+            subtitle: Text(settings.volumeUnit.format(settings.dailyGoalMl)),
             leading: const Icon(Icons.flag_outlined),
-            onTap: () => _editGoal(context, settings.dailyGoalMl, actions),
+            onTap: () => _editGoal(
+              context,
+              settings.dailyGoalMl,
+              settings.volumeUnit,
+              actions,
+            ),
           ),
           ListTile(
             title: const Text('Avatar'),
@@ -94,20 +114,22 @@ class SettingsScreen extends ConsumerWidget {
   Future<void> _editGoal(
     BuildContext context,
     int currentMl,
+    VolumeUnit unit,
     SettingsActions actions,
   ) async {
     final chosen = await showDialog<int>(
       context: context,
-      builder: (_) => _GoalDialog(initialMl: currentMl),
+      builder: (_) => _GoalDialog(initialMl: currentMl, unit: unit),
     );
     if (chosen != null) await actions.setDailyGoalMl(chosen);
   }
 }
 
 class _GoalDialog extends StatefulWidget {
-  const _GoalDialog({required this.initialMl});
+  const _GoalDialog({required this.initialMl, required this.unit});
 
   final int initialMl;
+  final VolumeUnit unit;
 
   @override
   State<_GoalDialog> createState() => _GoalDialogState();
@@ -118,21 +140,23 @@ class _GoalDialogState extends State<_GoalDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final spec = widget.unit.goalSlider;
     return AlertDialog(
       title: const Text('Daily goal'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            formatMl(_ml.round()),
+            widget.unit.format(_ml),
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           Slider(
-            value: _ml,
-            min: minGoalMl.toDouble(),
-            max: maxGoalMl.toDouble(),
-            divisions: (maxGoalMl - minGoalMl) ~/ goalStepMl,
-            onChanged: (v) => setState(() => _ml = v),
+            value: widget.unit.fromMl(_ml).clamp(spec.min, spec.max),
+            min: spec.min,
+            max: spec.max,
+            divisions: spec.divisions,
+            onChanged: (v) =>
+                setState(() => _ml = widget.unit.toMl(v).toDouble()),
           ),
         ],
       ),

@@ -2,10 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../core/format.dart';
 import '../../data/providers.dart';
 import '../../domain/drink.dart';
 import '../home/home_providers.dart';
+import '../settings/settings_providers.dart';
 
 Future<void> showDrinkEditor(BuildContext context, {Drink? existing}) =>
     showModalBottomSheet<void>(
@@ -27,7 +27,7 @@ class DrinkEditor extends ConsumerStatefulWidget {
 class _DrinkEditorState extends ConsumerState<DrinkEditor> {
   late final _name = TextEditingController(text: widget.existing?.name);
   late String? _categoryId = widget.existing?.categoryId;
-  late double _volumeMl = (widget.existing?.volumeMl ?? 250).toDouble();
+  late int _volumeMl = widget.existing?.volumeMl ?? 250;
   late bool _starred = widget.existing?.starred ?? false;
 
   @override
@@ -39,6 +39,8 @@ class _DrinkEditorState extends ConsumerState<DrinkEditor> {
   @override
   Widget build(BuildContext context) {
     final categories = ref.watch(categoriesProvider).value ?? const [];
+    final unit = ref.watch(volumeUnitProvider);
+    final spec = unit.volumeSlider;
     final categoryId = categories.any((c) => c.id == _categoryId)
         ? _categoryId
         : categories.firstOrNull?.id;
@@ -87,17 +89,17 @@ class _DrinkEditorState extends ConsumerState<DrinkEditor> {
             ),
             const SizedBox(height: 16),
             Text(
-              formatMl(_volumeMl.round()),
+              unit.format(_volumeMl),
               style: Theme.of(context).textTheme.headlineSmall,
               textAlign: TextAlign.center,
             ),
             Slider(
-              value: _volumeMl,
-              min: 50,
-              max: 1000,
-              divisions: 19,
-              label: formatMl(_volumeMl.round()),
-              onChanged: (v) => setState(() => _volumeMl = v),
+              value: unit.fromMl(_volumeMl).clamp(spec.min, spec.max),
+              min: spec.min,
+              max: spec.max,
+              divisions: spec.divisions,
+              label: unit.format(_volumeMl),
+              onChanged: (v) => setState(() => _volumeMl = unit.toMl(v)),
             ),
             SwitchListTile(
               title: const Text('Quick-log from home'),
@@ -137,7 +139,7 @@ class _DrinkEditorState extends ConsumerState<DrinkEditor> {
           base.copyWith(
             name: _name.text.trim(),
             categoryId: categoryId,
-            volumeMl: _volumeMl.round(),
+            volumeMl: _volumeMl,
             starred: _starred,
           ),
         );
