@@ -1,0 +1,175 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
+
+import '../../domain/goal.dart';
+import '../../domain/volume_unit.dart';
+import '../avatar/avatar_shape.dart';
+import 'app_settings.dart';
+import 'settings_providers.dart';
+
+class SettingsScreen extends ConsumerWidget {
+  const SettingsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings =
+        ref.watch(appSettingsProvider).value ?? const AppSettings();
+    final actions = ref.read(settingsActionsProvider);
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Settings')),
+      body: ListView(
+        children: [
+          ListTile(
+            title: const Text('Units'),
+            leading: const Icon(Icons.straighten),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: SegmentedButton<VolumeUnit>(
+                segments: [
+                  for (final unit in VolumeUnit.values)
+                    ButtonSegment(value: unit, label: Text(unit.label)),
+                ],
+                selected: {settings.volumeUnit},
+                onSelectionChanged: (s) => actions.setVolumeUnit(s.single),
+              ),
+            ),
+          ),
+          ListTile(
+            title: const Text('Daily goal'),
+            subtitle: Text(settings.volumeUnit.format(settings.dailyGoalMl)),
+            leading: const Icon(Icons.flag_outlined),
+            onTap: () => _editGoal(
+              context,
+              settings.dailyGoalMl,
+              settings.volumeUnit,
+              actions,
+            ),
+          ),
+          ListTile(
+            title: const Text('Avatar'),
+            leading: const Icon(Icons.face_outlined),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Wrap(
+                spacing: 8,
+                children: [
+                  for (final shape in AvatarShape.values)
+                    ChoiceChip(
+                      key: Key('avatar-${shape.name}'),
+                      label: Text(shape.label),
+                      selected: shape == settings.avatarShape,
+                      onSelected: (_) => actions.setAvatarShape(shape),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          const Divider(),
+          ListTile(
+            title: const Text('Sync'),
+            subtitle: Text(switch (settings.syncMode) {
+              SyncMode.off => 'Off',
+              SyncMode.folder => 'Shared folder',
+              SyncMode.drive => 'Google Drive',
+            }),
+            leading: const Icon(Icons.sync),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/settings/sync'),
+          ),
+          ListTile(
+            title: const Text('Backup & export'),
+            subtitle: const Text('Save, restore or export to CSV'),
+            leading: const Icon(Icons.save_alt),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/settings/backup'),
+          ),
+          ListTile(
+            title: const Text('Reminders'),
+            subtitle: Text(settings.reminders.enabled ? 'On' : 'Off'),
+            leading: const Icon(Icons.notifications_outlined),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/settings/reminders'),
+          ),
+          ListTile(
+            title: const Text('Drink categories'),
+            subtitle: const Text('Colors and hydration levels'),
+            leading: const Icon(Icons.palette_outlined),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/settings/categories'),
+          ),
+          ListTile(
+            title: const Text('Drinks'),
+            subtitle: const Text('Cup sizes and starred quick-log drinks'),
+            leading: const Icon(Icons.local_drink_outlined),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/settings/drinks'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _editGoal(
+    BuildContext context,
+    int currentMl,
+    VolumeUnit unit,
+    SettingsActions actions,
+  ) async {
+    final chosen = await showDialog<int>(
+      context: context,
+      builder: (_) => _GoalDialog(initialMl: currentMl, unit: unit),
+    );
+    if (chosen != null) await actions.setDailyGoalMl(chosen);
+  }
+}
+
+class _GoalDialog extends StatefulWidget {
+  const _GoalDialog({required this.initialMl, required this.unit});
+
+  final int initialMl;
+  final VolumeUnit unit;
+
+  @override
+  State<_GoalDialog> createState() => _GoalDialogState();
+}
+
+class _GoalDialogState extends State<_GoalDialog> {
+  late double _ml = widget.initialMl.clamp(minGoalMl, maxGoalMl).toDouble();
+
+  @override
+  Widget build(BuildContext context) {
+    final spec = widget.unit.goalSlider;
+    return AlertDialog(
+      title: const Text('Daily goal'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            widget.unit.format(_ml),
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          Slider(
+            value: widget.unit.fromMl(_ml).clamp(spec.min, spec.max),
+            min: spec.min,
+            max: spec.max,
+            divisions: spec.divisions,
+            onChanged: (v) =>
+                setState(() => _ml = widget.unit.toMl(v).toDouble()),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, _ml.round()),
+          child: const Text('Save'),
+        ),
+      ],
+    );
+  }
+}

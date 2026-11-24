@@ -1,0 +1,59 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
+
+import 'app_router.dart';
+import 'data/db/app_database.dart';
+import 'data/providers.dart';
+import 'data/repositories/category_repository.dart';
+import 'data/repositories/drink_repository.dart';
+import 'data/repositories/settings_repository.dart';
+import 'data/seed.dart';
+import 'features/reminders/reminder_providers.dart';
+import 'features/sync/sync_triggers.dart';
+import 'platform/create_reminder_scheduler.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final db = AppDatabase.persistent();
+  final deviceId = await SettingsRepository(db).loadOrCreateDeviceId();
+  await seedDefaults(
+    CategoryRepository(db, deviceId: deviceId),
+    DrinkRepository(db, deviceId: deviceId),
+  );
+
+  final scheduler = await createReminderScheduler();
+
+  runApp(
+    ProviderScope(
+      overrides: [
+        databaseProvider.overrideWithValue(db),
+        deviceIdProvider.overrideWithValue(deviceId),
+        reminderSchedulerProvider.overrideWithValue(scheduler),
+      ],
+      child: const SyncTriggers(child: HydraTrackApp()),
+    ),
+  );
+}
+
+class HydraTrackApp extends ConsumerWidget {
+  const HydraTrackApp({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(reminderSyncProvider);
+    return MaterialApp.router(
+      title: 'HydraTrack',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+      ),
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blue,
+          brightness: Brightness.dark,
+        ),
+      ),
+      routerConfig: ref.watch(routerProvider),
+    );
+  }
+}
