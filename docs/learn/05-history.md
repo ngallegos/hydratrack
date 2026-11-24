@@ -1,11 +1,11 @@
 # 05 — History, stats and streaks
 
-## Exercise
+## Exercise (done)
 
-Implement `currentStreak` in `lib/domain/streaks.dart`. The rules are in the comment above it, and `longestStreak`
-right below is a worked example of walking dates. Run `flutter test test/domain/streaks_test.dart`.
+`currentStreak` in `lib/domain/streaks.dart` is implemented and covered by `test/domain/streaks_test.dart`. The rules
+are in the comment above it, and `longestStreak` right below is a worked example of walking dates.
 
-Hints:
+Hints that were given:
 - Start at `dateOnly(today)`. If that day is not in `goalDays`, start from `previousDay(...)` instead
 - Loop while the current day is in the set, count, step back
 - `Set.contains` on `DateTime` compares the instant, so every value must be date-only (midnight local); that's what
@@ -13,8 +13,6 @@ Hints:
 - Why `DateTime(y, m, d - 1)` and not `day.subtract(Duration(days: 1))`? On a daylight-saving day a "day" is 23 or
   25 hours, so subtracting 24h can land on the wrong date. The constructor normalises overflow (`d - 1 == 0` becomes the
   last day of the previous month)
-
-When it passes, the `buildStatsData` test and the live Stats screen start working.
 
 ## Concepts
 
@@ -47,8 +45,9 @@ tree". Because our delete is a soft delete, the stream drops it immediately, and
 from them. Prefer this over three near-identical widgets, but split it once the branches outnumber the shared code.
 
 ## Known simplifications
-- Goal days use today's goal for every past day. Changing the goal rewrites past streaks.
-- Stats look back 365 days.
+- Goal days use today's goal for every past day, so changing the goal rewrites past streaks:
+  [#5](https://github.com/ngallegos/hydratrack/issues/5).
+- Stats look back 365 days. This is a design choice, not tracked work.
 
 ## Docs
 - [Riverpod Notifier](https://riverpod.dev/docs/concepts2/providers)

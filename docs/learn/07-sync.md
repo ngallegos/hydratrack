@@ -1,18 +1,15 @@
 # 07 — Sync
 
-## Exercise
+## Exercise (done)
 
-Implement `remoteWins` in `lib/data/sync/last_write_wins.dart`. The rules are in the comment above it. Run
-`flutter test test/data/sync/last_write_wins_test.dart`. Afterwards the end-to-end test in
-`test/data/sync/sync_service_test.dart` ("works end to end with the real last-write-wins rule") should pass too.
+`remoteWins` in `lib/data/sync/last_write_wins.dart` is implemented and covered by
+`test/data/sync/last_write_wins_test.dart`; the end-to-end test in `test/data/sync/sync_service_test.dart` ("works end to
+end with the real last-write-wins rule") exercises it too. The rules are in the comment above it.
 
-Hints:
+Hints that were given:
 - `DateTime.compareTo` returns negative, zero or positive, like C#'s `CompareTo`
 - `String.compareTo` works the same way and compares code units
 - Compare timestamps first; only when they are equal compare device ids
-
-Until it is done, sync still publishes your data and copies *new* records from other devices, but it can't pick a winner when
-two devices hold different versions of the same record, so the app throws on that path.
 
 ## Design
 
@@ -54,15 +51,22 @@ Syncing writes the "last synced" setting. If a change listener watched *all* tab
 So the listener watches only synced tables, and is debounced (30 s) so a burst of edits syncs once.
 
 ### Configuration at build time
-`String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID')` is read from `--dart-define` at compile time, which keeps
-OAuth identifiers out of the repository.
+`String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID')` is read from `--dart-define` at compile time, so a local build can
+override the OAuth client id bundled in `lib/platform/google_config.dart` without editing the file. Client ids are public
+identifiers, so bundling them is fine.
 
-## Known limitations
-- Settings (goal, avatar, reminders) are per device and not synced; only categories, drinks and entries are.
-- Past days' goal results use the current goal when computing streaks.
-- Android folder sync uses real file paths plus "all files access", not the Storage Access Framework.
-- Folder sync isn't available in the browser (needs the File System Access API); web can use Drive once web sign-in exists.
-- Drive sign-in and Android folder access haven't run on a device. See [drive-setup.md](../drive-setup.md).
+## Tracked follow-ups
+- Settings (goal, avatar, reminders) are per device and not synced; only categories, drinks and entries are:
+  [#6](https://github.com/ngallegos/hydratrack/issues/6).
+- Past days' goal results use the current goal when computing streaks: [#5](https://github.com/ngallegos/hydratrack/issues/5).
+- Android folder sync uses real file paths plus "all files access", not the Storage Access Framework:
+  [#12](https://github.com/ngallegos/hydratrack/issues/12).
+- Folder sync isn't available in the browser (needs the File System Access API):
+  [#14](https://github.com/ngallegos/hydratrack/issues/14).
+- Drive sync in the browser needs web sign-in: [#13](https://github.com/ngallegos/hydratrack/issues/13).
+- Drive sign-in has no OAuth clients yet ([#3](https://github.com/ngallegos/hydratrack/issues/3), see
+  [drive-setup.md](../drive-setup.md)), and neither it nor Android folder access has run on a device
+  ([#4](https://github.com/ngallegos/hydratrack/issues/4)).
 
 ## Docs
 - [Drive appDataFolder](https://developers.google.com/drive/api/guides/appdata)

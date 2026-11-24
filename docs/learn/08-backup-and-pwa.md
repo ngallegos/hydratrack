@@ -28,5 +28,8 @@ The app icon was rendered by a throwaway test that reused `AvatarShape.drop.buil
 ### Launcher icons
 `flutter_launcher_icons` (config at the bottom of `pubspec.yaml`) regenerates Android mipmaps from one PNG.
 
-## Not done
-Android-only extras that need the Android SDK to build and verify: a home-screen widget, Health Connect, and shake-to-undo.
+## Tracked follow-ups
+Android-only extras that need the Android SDK to build and verify:
+- Home-screen widget: [#10](https://github.com/ngallegos/hydratrack/issues/10)
+- Health Connect: [#11](https://github.com/ngallegos/hydratrack/issues/11)
+- Shake to undo: [#8](https://github.com/ngallegos/hydratrack/issues/8)

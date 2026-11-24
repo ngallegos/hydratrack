@@ -1,19 +1,15 @@
 # 03 — Home screen
 
-## Exercise
+## Exercise (done)
 
-Finish `StarredDrinkChip` in `lib/features/home/starred_drink_chip.dart`. Run
-`flutter test test/features/home/starred_drink_chip_test.dart` until green. The requirements are in the
-comment above the class.
+`StarredDrinkChip` in `lib/features/home/starred_drink_chip.dart` is implemented and covered by
+`test/features/home/starred_drink_chip_test.dart`. The requirements are in the comment above the class.
 
-Hints:
+Hints that were given:
 - `ActionChip(avatar: ..., label: ..., onPressed: ...)`
 - String interpolation: `'${drink.name} · ${formatMl(drink.volumeMl)}'`
 - A dot is a `Container` with `width`/`height` and `BoxDecoration(shape: BoxShape.circle, color: Color(category.colorValue))`
 - Keys let tests find a specific widget: `Container(key: const Key('category-dot'), ...)`
-
-Heads up: the home screen's progress and avatar depend on your phase 2 `hydrationByCategory`. Until that
-exercise is done, `todayHydrationProvider` throws and the live app shows no progress. Tests override it.
 
 ## Concepts
 

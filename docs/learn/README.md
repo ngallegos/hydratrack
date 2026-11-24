@@ -1,6 +1,6 @@
 # Learning Flutter/Dart with HydraTrack
 
-One note per build phase, plus an exercise where noted. Written for a C#/.NET developer.
+One note per build phase. Phases 2-7 each had an exercise, now implemented; the hints stay in the notes. Written for a C#/.NET developer.
 
 | Phase | Notes |
 | --- | --- |
