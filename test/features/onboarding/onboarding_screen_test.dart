@@ -121,6 +121,22 @@ void main() {
     expect(actions.units, [VolumeUnit.flOz]);
   });
 
+  testWidgets('suggest stays disabled for a weight that is not a number', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_host(_FakeSettingsActions()));
+    await tester.pumpAndSettle();
+
+    for (final text in ['Infinity', 'NaN', '-5', '0', 'abc']) {
+      await tester.enterText(find.byType(TextField), text);
+      await tester.pump();
+      final button = tester.widget<OutlinedButton>(
+        find.widgetWithText(OutlinedButton, 'Suggest my goal'),
+      );
+      expect(button.onPressed, isNull, reason: text);
+    }
+  });
+
   // Fails until the suggestedDailyGoalMl exercise (lib/domain/goal.dart) is done.
   testWidgets('suggest fills the goal from weight and activity', (
     tester,

@@ -27,6 +27,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   double? get _weightKg => double.tryParse(_weight.text.trim());
 
+  bool get _hasValidWeight {
+    final weight = _weightKg;
+    return weight != null && weight.isFinite && weight > 0;
+  }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -81,7 +86,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
             const SizedBox(height: 16),
             OutlinedButton(
-              onPressed: (_weightKg ?? 0) > 0 ? _suggest : null,
+              onPressed: _hasValidWeight ? _suggest : null,
               child: const Text('Suggest my goal'),
             ),
             const SizedBox(height: 24),

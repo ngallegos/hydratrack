@@ -15,17 +15,21 @@ const minGoalMl = 1000;
 const maxGoalMl = 6000;
 const goalStepMl = 50;
 
-// EXERCISE: suggest a daily hydration goal.
-//
-// goal = weightKg * mlPerKg * activity.multiplier, then
-//  - rounded to the nearest goalStepMl (50 ml)
-//  - clamped to minGoalMl..maxGoalMl
-//  - throws ArgumentError when weightKg is not positive
-//
-// See test/domain/goal_test.dart for worked examples.
 int suggestedDailyGoalMl({
   required double weightKg,
   required ActivityLevel activity,
 }) {
-  throw UnimplementedError('Exercise: implement suggestedDailyGoalMl');
+  if (!weightKg.isFinite || weightKg <= 0) {
+    throw ArgumentError.value(
+      weightKg,
+      'weightKg',
+      'must be a positive number',
+    );
+  }
+
+  final rawGoal = weightKg * mlPerKg * activity.multiplier;
+  final roundedToGoalStep = (rawGoal / goalStepMl).round() * goalStepMl;
+  final goal = roundedToGoalStep.clamp(minGoalMl, maxGoalMl).toInt();
+
+  return goal;
 }

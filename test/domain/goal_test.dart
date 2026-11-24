@@ -36,6 +36,23 @@ void main() {
       );
     });
 
+    test('rejects NaN and infinite weight', () {
+      for (final weight in [
+        double.nan,
+        double.infinity,
+        double.negativeInfinity,
+      ]) {
+        expect(
+          () => suggestedDailyGoalMl(
+            weightKg: weight,
+            activity: ActivityLevel.sedentary,
+          ),
+          throwsArgumentError,
+          reason: '$weight',
+        );
+      }
+    });
+
     test('rejects non-positive weight', () {
       expect(
         () => suggestedDailyGoalMl(
