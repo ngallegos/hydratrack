@@ -29,11 +29,10 @@ class AvatarPainter extends CustomPainter {
 
     canvas.save();
     canvas.clipPath(outline);
-    final fillTop = bands.fold(0.0, (top, band) => math.max(top, band.end));
-    for (final band in bands) {
-      final isSurface = band.end == fillTop && fillTop < 0.999;
+    final layers = orderedLayers(bands);
+    for (final (index, band) in layers.indexed) {
       canvas.drawPath(
-        _bandPath(size, band, withWave: isSurface),
+        layerPath(size, band, index),
         Paint()..color = Color(band.colorValue),
       );
     }
@@ -49,23 +48,39 @@ class AvatarPainter extends CustomPainter {
     );
   }
 
-  Path _bandPath(Size size, AvatarBand band, {required bool withWave}) {
-    final top = size.height * (1 - band.end);
-    final bottom = size.height * (1 - band.start);
-    if (!withWave) {
-      return Path()..addRect(Rect.fromLTRB(0, top, size.width, bottom));
-    }
+  /// Highest surface first. Each layer is painted down to the bottom of the
+  /// avatar, so lower layers cover the lower part of the ones above and what
+  /// stays visible of a layer is the slice between its own surface and the
+  /// surface of the layer beneath it. Ties put the band that starts higher
+  /// first, so a zero-height band is covered by the one below it.
+  @visibleForTesting
+  static List<AvatarBand> orderedLayers(List<AvatarBand> bands) {
+    return [...bands]..sort((a, b) {
+      final byTop = b.end.compareTo(a.end);
+      return byTop != 0 ? byTop : b.start.compareTo(a.start);
+    });
+  }
 
-    final amplitude = math.min(size.height * 0.012, (bottom - top) / 2);
-    final path = Path()..moveTo(0, bottom);
+  /// The region from this band's wavy surface down to the avatar's bottom.
+  /// Every layer waves on its own: [index] offsets the phase and alternates
+  /// the direction, so category boundaries don't move in lockstep.
+  @visibleForTesting
+  Path layerPath(Size size, AvatarBand band, int index) {
+    final top = size.height * (1 - band.end);
+    final height = size.height * (band.end - band.start);
+    final atBrim = band.end >= 0.999;
+    final amplitude = atBrim ? 0.0 : math.min(size.height * 0.012, height / 2);
+    final phase = (index.isEven ? wavePhase : -wavePhase) + index * 2.1;
+
+    final path = Path()..moveTo(0, size.height);
     for (var x = 0.0; x <= size.width; x += 2) {
       final y =
           top +
-          amplitude * math.sin(wavePhase + x / size.width * 2 * math.pi * 1.5);
+          amplitude * math.sin(phase + x / size.width * 2 * math.pi * 1.5);
       path.lineTo(x, y);
     }
     return path
-      ..lineTo(size.width, bottom)
+      ..lineTo(size.width, size.height)
       ..close();
   }
 
