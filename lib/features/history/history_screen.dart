@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../../core/format.dart';
 import '../../data/providers.dart';
 import '../../domain/log_entry.dart';
 import '../../domain/stats.dart';
@@ -9,6 +8,7 @@ import '../../domain/streaks.dart';
 import '../home/home_providers.dart';
 import '../log/log_sheet.dart';
 import 'history_providers.dart';
+import '../settings/settings_providers.dart';
 
 class HistoryScreen extends ConsumerWidget {
   const HistoryScreen({super.key});
@@ -16,6 +16,7 @@ class HistoryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final day = ref.watch(selectedDayProvider);
+    final unit = ref.watch(volumeUnitProvider);
     final entries = ref.watch(selectedDayEntriesProvider).value ?? const [];
     final categoryList = ref.watch(categoriesProvider).value ?? const [];
     final categories = {for (final c in categoryList) c.id: c};
@@ -52,7 +53,7 @@ class HistoryScreen extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.all(16),
             child: Text(
-              formatMl(totalMl.round()),
+              unit.format(totalMl),
               style: Theme.of(context).textTheme.headlineMedium,
             ),
           ),
@@ -85,7 +86,7 @@ class HistoryScreen extends ConsumerWidget {
                                 backgroundColor: Color(category.colorValue),
                               ),
                               title: Text(
-                                '${formatMl(entry.volumeMl)} ${category.name}',
+                                '${unit.format(entry.volumeMl)} ${category.name}',
                               ),
                               subtitle: Text(
                                 TimeOfDay.fromDateTime(entry.loggedAt)
@@ -123,13 +124,14 @@ class HistoryScreen extends ConsumerWidget {
   }
 
   void _delete(BuildContext context, WidgetRef ref, LogEntry entry) {
+    final unit = ref.read(volumeUnitProvider);
     final repository = ref.read(logRepositoryProvider);
     repository.softDelete(entry.id);
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text('Deleted ${formatMl(entry.volumeMl)}'),
+          content: Text('Deleted ${unit.format(entry.volumeMl)}'),
           action: SnackBarAction(
             label: 'Undo',
             onPressed: () => repository.restore(entry.id),

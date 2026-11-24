@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../../core/format.dart';
 import '../../data/providers.dart';
+import '../settings/settings_providers.dart';
 
 /// Logs a drink and offers a snackbar Undo that soft-deletes the new entry.
 Future<void> logDrink(
@@ -14,6 +14,7 @@ Future<void> logDrink(
   DateTime? at,
 }) async {
   final repository = ref.read(logRepositoryProvider);
+  final unit = ref.read(volumeUnitProvider);
   final entry = await repository.add(
     categoryId: categoryId,
     volumeMl: volumeMl,
@@ -25,7 +26,7 @@ Future<void> logDrink(
     ..hideCurrentSnackBar()
     ..showSnackBar(
       SnackBar(
-        content: Text('Logged ${formatMl(volumeMl)} $categoryName'),
+        content: Text('Logged ${unit.format(volumeMl)} $categoryName'),
         action: SnackBarAction(
           label: 'Undo',
           onPressed: () => repository.softDelete(entry.id),

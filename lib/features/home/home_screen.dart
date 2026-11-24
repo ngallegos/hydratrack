@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../../core/format.dart';
 import '../../domain/hydration.dart';
 import '../avatar/avatar_band.dart';
 import '../avatar/avatar_view.dart';
@@ -10,6 +9,7 @@ import '../log/log_actions.dart';
 import '../log/log_sheet.dart';
 import 'home_providers.dart';
 import 'starred_drink_chip.dart';
+import '../settings/settings_providers.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -20,6 +20,7 @@ class HomeScreen extends ConsumerWidget {
     final categories = ref.watch(categoriesProvider).value ?? const [];
     final starred = ref.watch(starredDrinksProvider).value ?? const [];
     final goalMl = ref.watch(dailyGoalMlProvider);
+    final unit = ref.watch(volumeUnitProvider);
     final shape = ref.watch(avatarShapeProvider);
 
     final totalMl = totalHydrationMl(hydration).round();
@@ -62,12 +63,12 @@ class HomeScreen extends ConsumerWidget {
                   shape: shape,
                   bands: bands,
                   semanticsLabel:
-                      '${formatMl(totalMl)} of ${formatMl(goalMl)} today',
+                      '${unit.format(totalMl)} of ${unit.format(goalMl)} today',
                 ),
               ),
             ),
             Text(
-              '${formatMl(totalMl)} / ${formatMl(goalMl)}',
+              '${unit.format(totalMl)} / ${unit.format(goalMl)}',
               style: textTheme.headlineMedium,
             ),
             if (totalMl >= goalMl)
@@ -85,6 +86,7 @@ class HomeScreen extends ConsumerWidget {
                       StarredDrinkChip(
                         drink: drink,
                         category: category,
+                        unit: unit,
                         onTap: () => logDrink(
                           context,
                           ref,

@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../../core/format.dart';
 import '../../data/providers.dart';
 import '../home/home_providers.dart';
 import 'drink_editor.dart';
 import 'drinks_providers.dart';
+import '../settings/settings_providers.dart';
 
 class DrinksScreen extends ConsumerWidget {
   const DrinksScreen({super.key});
@@ -13,6 +13,7 @@ class DrinksScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final drinks = ref.watch(allDrinksProvider).value ?? const [];
+    final unit = ref.watch(volumeUnitProvider);
     final categoryList = ref.watch(categoriesProvider).value ?? const [];
     final categories = {for (final c in categoryList) c.id: c};
 
@@ -29,7 +30,7 @@ class DrinksScreen extends ConsumerWidget {
                 ),
                 title: Text(drink.name),
                 subtitle: Text(
-                  '${category.name} · ${formatMl(drink.volumeMl)}',
+                  '${category.name} · ${unit.format(drink.volumeMl)}',
                 ),
                 trailing: IconButton(
                   key: Key('star-${drink.id}'),
