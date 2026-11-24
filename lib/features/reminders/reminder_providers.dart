@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -44,34 +46,86 @@ final reminderSyncProvider = Provider<void>((ref) {
   }, fireImmediately: true);
 });
 
-enum NotificationAccess { unknown, granted, unavailable }
+enum NotificationAccessStatus {
+  unknown,
+  checking,
+  granted,
+  denied,
+  dismissed,
+  unsupported,
+  noResponse,
+  failed,
+}
 
-/// Whether the OS or browser lets us show notifications. Kept separate from
-/// the reminders switch so the switch always works and a permission problem
-/// is shown, not hidden.
-class NotificationAccessController extends Notifier<NotificationAccess> {
+class NotificationAccessState {
+  const NotificationAccessState(this.status, [this.detail]);
+
+  final NotificationAccessStatus status;
+
+  /// The underlying error, for [NotificationAccessStatus.failed].
+  final String? detail;
+
+  bool get isChecking => status == NotificationAccessStatus.checking;
+
+  bool get isProblem => switch (status) {
+    NotificationAccessStatus.denied ||
+    NotificationAccessStatus.dismissed ||
+    NotificationAccessStatus.unsupported ||
+    NotificationAccessStatus.noResponse ||
+    NotificationAccessStatus.failed => true,
+    _ => false,
+  };
+}
+
+/// How long to wait for the OS or browser to answer a permission request.
+const notificationRequestTimeout = Duration(seconds: 30);
+
+/// Whether the OS or browser lets us show notifications. Kept apart from the
+/// reminders setting so every outcome of asking is visible, including the
+/// request never being answered.
+class NotificationAccessController extends Notifier<NotificationAccessState> {
   @override
-  NotificationAccess build() => NotificationAccess.unknown;
+  NotificationAccessState build() =>
+      const NotificationAccessState(NotificationAccessStatus.unknown);
 
-  /// Must be called from a user action: browsers ignore other requests.
-  Future<void> request() async {
+  void reset() =>
+      state = const NotificationAccessState(NotificationAccessStatus.unknown);
+
+  /// Returns true if notifications are allowed. Must be called from a user
+  /// action: browsers ignore other requests.
+  Future<bool> request() async {
+    state = const NotificationAccessState(NotificationAccessStatus.checking);
     try {
-      final granted = await ref
+      final result = await ref
           .read(reminderSchedulerProvider)
-          .requestPermission();
-      state = granted
-          ? NotificationAccess.granted
-          : NotificationAccess.unavailable;
+          .requestPermission()
+          .timeout(notificationRequestTimeout);
+      final status = switch (result) {
+        PermissionResult.granted => NotificationAccessStatus.granted,
+        PermissionResult.denied => NotificationAccessStatus.denied,
+        PermissionResult.dismissed => NotificationAccessStatus.dismissed,
+        PermissionResult.unsupported => NotificationAccessStatus.unsupported,
+      };
+      state = NotificationAccessState(status);
+      return status == NotificationAccessStatus.granted;
+    } on TimeoutException {
+      state = const NotificationAccessState(
+        NotificationAccessStatus.noResponse,
+      );
     } on Object catch (error, stack) {
       // Platform plugins can throw non-Exception errors (for example
       // JavaScript errors in browsers without the Notification API).
       debugPrint('Notification permission request failed: $error\n$stack');
-      state = NotificationAccess.unavailable;
+      state = NotificationAccessState(
+        NotificationAccessStatus.failed,
+        '$error',
+      );
     }
+    return false;
   }
 }
 
 final notificationAccessProvider =
-    NotifierProvider<NotificationAccessController, NotificationAccess>(
+    NotifierProvider<NotificationAccessController, NotificationAccessState>(
       NotificationAccessController.new,
     );
