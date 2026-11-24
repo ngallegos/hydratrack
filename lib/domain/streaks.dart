@@ -3,20 +3,17 @@ DateTime dateOnly(DateTime t) => DateTime(t.year, t.month, t.day);
 DateTime previousDay(DateTime day) =>
     DateTime(day.year, day.month, day.day - 1);
 
-// EXERCISE: current streak of consecutive days that met the goal.
-//
-// [goalDays] holds date-only (midnight, local) days on which the goal was met.
-// [today] may include a time; use dateOnly(today).
-//
-//  - count back from today while each day is in goalDays
-//  - if today is not (yet) in goalDays, the streak is still alive: start
-//    counting from yesterday instead, because today isn't over
-//  - a gap of one missed day ends the streak
-//  - use previousDay() to step back (it is safe across daylight-saving changes)
-//
-// See test/domain/streaks_test.dart.
 int currentStreak({required Set<DateTime> goalDays, required DateTime today}) {
-  throw UnimplementedError('Exercise: implement currentStreak');
+  var day = dateOnly(today);
+  if (!goalDays.contains(day)) day = previousDay(day);
+  int streak = 0;
+
+  while (goalDays.contains(day)) {
+    streak++;
+    day = previousDay(day);
+  }
+
+  return streak;
 }
 
 int longestStreak(Set<DateTime> goalDays) {
