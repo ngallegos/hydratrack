@@ -12,7 +12,7 @@ Free, login-free hydration tracker. Flutter app for Android and the web (install
 - Goal suggestion from weight and activity
 - Works fully offline with no account. Optional sync:
   - a shared folder (Syncthing, Dropbox, ...), or
-  - Google Drive, stored in a hidden app-only folder ([setup](docs/drive-setup.md))
+  - Google Drive, stored in a hidden app-only folder (one-tap sign-in; [author setup](docs/drive-setup.md))
 - JSON backup/restore and CSV export
 
 ## Develop

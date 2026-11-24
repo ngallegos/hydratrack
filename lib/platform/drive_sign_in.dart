@@ -5,6 +5,7 @@ import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sig
 
 import '../data/sync/drive_files.dart';
 import '../data/sync/google_drive_files.dart';
+import 'google_config.dart';
 
 abstract interface class DriveSignIn {
   /// False when no OAuth client id was supplied at build time, or on a
@@ -24,11 +25,6 @@ abstract interface class DriveSignIn {
 }
 
 class GoogleDriveSignIn implements DriveSignIn {
-  // Supplied with --dart-define; see docs/drive-setup.md.
-  static const _clientId = String.fromEnvironment('GOOGLE_CLIENT_ID');
-  static const _serverClientId = String.fromEnvironment(
-    'GOOGLE_SERVER_CLIENT_ID',
-  );
   static const _tokenLifetime = Duration(minutes: 30);
 
   Future<void>? _initialized;
@@ -38,8 +34,8 @@ class GoogleDriveSignIn implements DriveSignIn {
   @override
   String? get unavailableReason {
     if (kIsWeb) return 'Not available in the browser yet';
-    if (_serverClientId.isEmpty) {
-      return 'Needs a Google Cloud client id (see docs/drive-setup.md)';
+    if (googleServerClientId.isEmpty) {
+      return 'Google Drive sync is not set up in this build';
     }
     return null;
   }
@@ -49,8 +45,10 @@ class GoogleDriveSignIn implements DriveSignIn {
 
   Future<void> _ensureInitialized() =>
       _initialized ??= GoogleSignIn.instance.initialize(
-        clientId: _clientId.isEmpty ? null : _clientId,
-        serverClientId: _serverClientId.isEmpty ? null : _serverClientId,
+        clientId: googleWebClientId.isEmpty ? null : googleWebClientId,
+        serverClientId: googleServerClientId.isEmpty
+            ? null
+            : googleServerClientId,
       );
 
   @override
