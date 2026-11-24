@@ -5,6 +5,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../domain/goal.dart';
 import '../../domain/reminder_settings.dart';
+import '../../domain/volume_unit.dart';
 import '../avatar/avatar_shape.dart';
 
 part 'app_settings.freezed.dart';
@@ -16,6 +17,7 @@ abstract final class SettingKeys {
   static const activityLevel = 'activityLevel';
   static const onboardingDone = 'onboardingDone';
   static const reminders = 'reminders';
+  static const volumeUnit = 'volumeUnit';
   static const syncMode = 'syncMode';
   static const syncFolderPath = 'syncFolderPath';
   static const lastSyncAt = 'lastSyncAt';
@@ -33,6 +35,7 @@ abstract class AppSettings with _$AppSettings {
     @Default(ActivityLevel.sedentary) ActivityLevel activity,
     @Default(false) bool onboardingDone,
     @Default(ReminderSettings()) ReminderSettings reminders,
+    @Default(VolumeUnit.ml) VolumeUnit volumeUnit,
     @Default(SyncMode.off) SyncMode syncMode,
     String? syncFolderPath,
     DateTime? lastSyncAt,
@@ -50,6 +53,9 @@ abstract class AppSettings with _$AppSettings {
         ActivityLevel.sedentary,
     onboardingDone: map[SettingKeys.onboardingDone] == 'true',
     reminders: _parseReminders(map[SettingKeys.reminders]),
+    volumeUnit:
+        VolumeUnit.values.asNameMap()[map[SettingKeys.volumeUnit]] ??
+        VolumeUnit.ml,
     syncMode:
         SyncMode.values.asNameMap()[map[SettingKeys.syncMode]] ?? SyncMode.off,
     syncFolderPath: map[SettingKeys.syncFolderPath],
@@ -80,6 +86,9 @@ class SettingsActions {
 
   Future<void> setReminders(ReminderSettings reminders) =>
       _repository.set(SettingKeys.reminders, jsonEncode(reminders.toJson()));
+
+  Future<void> setVolumeUnit(VolumeUnit unit) =>
+      _repository.set(SettingKeys.volumeUnit, unit.name);
 
   Future<void> setSyncFolder(String path) => _repository.setMany({
     SettingKeys.syncMode: SyncMode.folder.name,

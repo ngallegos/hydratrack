@@ -4,6 +4,7 @@ import 'package:hydratrack/data/db/app_database.dart';
 import 'package:hydratrack/data/repositories/settings_repository.dart';
 import 'package:hydratrack/domain/goal.dart';
 import 'package:hydratrack/domain/reminder_settings.dart';
+import 'package:hydratrack/domain/volume_unit.dart';
 import 'package:hydratrack/features/avatar/avatar_shape.dart';
 import 'package:hydratrack/features/settings/app_settings.dart';
 
@@ -41,6 +42,15 @@ void main() {
       });
 
       expect(settings.reminders, const ReminderSettings());
+    });
+
+    test('volume unit defaults to mL and ignores unknown values', () {
+      expect(AppSettings.fromMap(const {}).volumeUnit, VolumeUnit.ml);
+      expect(
+        AppSettings.fromMap(const {SettingKeys.volumeUnit: 'gallons'})
+            .volumeUnit,
+        VolumeUnit.ml,
+      );
     });
 
     test('sync defaults to off with no folder', () {
@@ -102,6 +112,12 @@ void main() {
 
       await actions.setSyncMode(SyncMode.off);
       expect((await current()).syncMode, SyncMode.off);
+    });
+
+    test('setVolumeUnit persists', () async {
+      await actions.setVolumeUnit(VolumeUnit.flOz);
+
+      expect((await current()).volumeUnit, VolumeUnit.flOz);
     });
 
     test('setReminders round-trips through storage', () async {
