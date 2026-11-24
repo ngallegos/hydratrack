@@ -29,9 +29,11 @@ AccessMessage? accessMessage(
       return isWeb
           ? const AccessMessage(
               'Notifications are blocked for this site',
-              'Click the icon at the left of the address bar (a lock or '
-                  'sliders), set Notifications to Allow, reload the page, then '
-                  'turn reminders on again.',
+              'Your browser blocked them, possibly automatically after the '
+                  'permission prompt was closed several times. Click the icon '
+                  'next to the address bar (a lock or sliders), set '
+                  'Notifications to Allow, reload the page, then turn '
+                  'reminders on again.',
             )
           : const AccessMessage(
               'Notifications are turned off for HydraTrack',
