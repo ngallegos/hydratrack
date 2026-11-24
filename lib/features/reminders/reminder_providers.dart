@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/reminder_plan.dart';
@@ -42,3 +43,35 @@ final reminderSyncProvider = Provider<void>((ref) {
     ref.read(reminderSchedulerProvider).replaceAll(plan);
   }, fireImmediately: true);
 });
+
+enum NotificationAccess { unknown, granted, unavailable }
+
+/// Whether the OS or browser lets us show notifications. Kept separate from
+/// the reminders switch so the switch always works and a permission problem
+/// is shown, not hidden.
+class NotificationAccessController extends Notifier<NotificationAccess> {
+  @override
+  NotificationAccess build() => NotificationAccess.unknown;
+
+  /// Must be called from a user action: browsers ignore other requests.
+  Future<void> request() async {
+    try {
+      final granted = await ref
+          .read(reminderSchedulerProvider)
+          .requestPermission();
+      state = granted
+          ? NotificationAccess.granted
+          : NotificationAccess.unavailable;
+    } on Object catch (error, stack) {
+      // Platform plugins can throw non-Exception errors (for example
+      // JavaScript errors in browsers without the Notification API).
+      debugPrint('Notification permission request failed: $error\n$stack');
+      state = NotificationAccess.unavailable;
+    }
+  }
+}
+
+final notificationAccessProvider =
+    NotifierProvider<NotificationAccessController, NotificationAccess>(
+      NotificationAccessController.new,
+    );
