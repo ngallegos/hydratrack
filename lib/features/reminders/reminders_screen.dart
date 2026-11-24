@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../domain/reminder_settings.dart';
 import '../settings/settings_providers.dart';
+import 'notification_access_text.dart';
 import 'reminder_providers.dart';
 
 const _intervalChoices = [30, 45, 60, 90, 120, 180];
@@ -55,12 +56,21 @@ class RemindersScreen extends ConsumerWidget {
       await actions.setReminders(updated);
     }
 
+    final accessController = ref.read(notificationAccessProvider.notifier);
+
     Future<void> toggle(bool enable) async {
-      if (enable) {
-        await ref.read(notificationAccessProvider.notifier).request();
+      if (!enable) {
+        accessController.reset();
+        await actions.setReminders(reminders.copyWith(enabled: false));
+        return;
       }
-      await actions.setReminders(reminders.copyWith(enabled: enable));
+      debugPrint('Reminders switch: asking for notification permission');
+      if (await accessController.request()) {
+        await actions.setReminders(reminders.copyWith(enabled: true));
+      }
     }
+
+    final message = accessMessage(access, isWeb: kIsWeb);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Reminders')),
@@ -70,23 +80,17 @@ class RemindersScreen extends ConsumerWidget {
             title: const Text('Remind me to drink'),
             subtitle: const Text('Stops for the day once you reach your goal'),
             value: reminders.enabled,
-            onChanged: toggle,
+            onChanged: access.isChecking ? null : toggle,
           ),
-          if (reminders.enabled && access == NotificationAccess.unavailable)
-            ListTile(
-              key: const Key('notifications-blocked'),
-              leading: const Icon(Icons.notifications_off_outlined),
-              title: const Text('Notifications are blocked here'),
-              subtitle: const Text(
-                'Reminders are on but nothing will appear until you allow '
-                'notifications for HydraTrack in your browser or device '
-                'settings.',
-              ),
-              trailing: TextButton(
-                onPressed: () =>
-                    ref.read(notificationAccessProvider.notifier).request(),
-                child: const Text('Try again'),
-              ),
+          if (message != null)
+            _AccessNotice(
+              message: message,
+              checking: access.isChecking,
+              onRetry: () async {
+                if (await accessController.request()) {
+                  await actions.setReminders(reminders.copyWith(enabled: true));
+                }
+              },
             ),
           ListTile(
             enabled: reminders.enabled,
@@ -155,6 +159,49 @@ class RemindersScreen extends ConsumerWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _AccessNotice extends StatelessWidget {
+  const _AccessNotice({
+    required this.message,
+    required this.checking,
+    required this.onRetry,
+  });
+
+  final AccessMessage message;
+  final bool checking;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Card(
+      key: const Key('notification-access-notice'),
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      color: checking ? colors.surfaceContainerHigh : colors.errorContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (checking) const LinearProgressIndicator(),
+            if (checking) const SizedBox(height: 12),
+            Text(message.title, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 4),
+            Text(message.fix),
+            if (!checking)
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: onRetry,
+                  child: const Text('Try again'),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

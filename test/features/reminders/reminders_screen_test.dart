@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hydratrack/domain/reminder_settings.dart';
@@ -17,33 +19,29 @@ class _FakeSettingsActions extends Fake implements SettingsActions {
 }
 
 class _FakeScheduler implements ReminderScheduler {
-  _FakeScheduler({this.grants = true, this.throws = false});
+  _FakeScheduler({this.result = PermissionResult.granted});
 
-  bool grants;
-  final bool throws;
+  PermissionResult result;
+  Completer<PermissionResult>? hang;
+  Object? error;
   var permissionRequests = 0;
 
   @override
-  Future<bool> requestPermission() async {
+  Future<PermissionResult> requestPermission() async {
     permissionRequests++;
-    if (throws) throw StateError('Notification API missing');
-    return grants;
+    if (error != null) throw error!;
+    if (hang != null) return hang!.future;
+    return result;
   }
 
   @override
   Future<void> replaceAll(List<DateTime> times) async {}
 }
 
-class _BlockedAccess extends NotificationAccessController {
-  @override
-  NotificationAccess build() => NotificationAccess.unavailable;
-}
-
 Widget _host(
   _FakeSettingsActions actions,
   _FakeScheduler scheduler, {
   ReminderSettings reminders = const ReminderSettings(),
-  bool startBlocked = false,
 }) => ProviderScope(
   overrides: [
     appSettingsProvider.overrideWith(
@@ -51,148 +49,208 @@ Widget _host(
     ),
     settingsActionsProvider.overrideWithValue(actions),
     reminderSchedulerProvider.overrideWithValue(scheduler),
-    if (startBlocked)
-      notificationAccessProvider.overrideWith(_BlockedAccess.new),
   ],
   child: const MaterialApp(home: RemindersScreen()),
 );
 
+NotificationAccessStatus _status(WidgetTester tester) =>
+    ProviderScope.containerOf(tester.element(find.byType(RemindersScreen)))
+        .read(notificationAccessProvider)
+        .status;
+
+final _notice = find.byKey(const Key('notification-access-notice'));
+
+Future<void> _toggle(WidgetTester tester) async {
+  await tester.tap(find.byType(Switch));
+  await tester.pumpAndSettle();
+}
+
 void main() {
-  testWidgets('enabling asks for permission and saves', (tester) async {
-    final actions = _FakeSettingsActions();
-    final scheduler = _FakeScheduler();
-    await tester.pumpWidget(_host(actions, scheduler));
-    await tester.pumpAndSettle();
+  group('turning reminders on', () {
+    testWidgets('asks for permission and saves when it is granted', (
+      tester,
+    ) async {
+      final actions = _FakeSettingsActions();
+      final scheduler = _FakeScheduler();
+      await tester.pumpWidget(_host(actions, scheduler));
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.byType(Switch));
-    await tester.pumpAndSettle();
+      await _toggle(tester);
 
-    expect(scheduler.permissionRequests, 1);
-    expect(actions.saved.single.enabled, isTrue);
-  });
+      expect(scheduler.permissionRequests, 1);
+      expect(actions.saved.single.enabled, isTrue);
+      expect(_notice, findsNothing);
+    });
 
-  NotificationAccess accessOf(WidgetTester tester) =>
-      ProviderScope.containerOf(tester.element(find.byType(RemindersScreen)))
-          .read(notificationAccessProvider);
+    for (final (result, title) in [
+      (PermissionResult.denied, 'blocked'),
+      (PermissionResult.dismissed, 'not allowed'),
+      (PermissionResult.unsupported, 'show notifications here'),
+    ]) {
+      testWidgets('does not turn on and explains the fix when $title', (
+        tester,
+      ) async {
+        final actions = _FakeSettingsActions();
+        await tester.pumpWidget(_host(actions, _FakeScheduler(result: result)));
+        await tester.pumpAndSettle();
 
-  testWidgets('the switch still turns on when permission is denied', (
-    tester,
-  ) async {
-    final actions = _FakeSettingsActions();
-    await tester.pumpWidget(_host(actions, _FakeScheduler(grants: false)));
-    await tester.pumpAndSettle();
+        await _toggle(tester);
 
-    await tester.tap(find.byType(Switch));
-    await tester.pumpAndSettle();
+        expect(actions.saved, isEmpty);
+        expect(_notice, findsOneWidget);
+        expect(find.text('Try again'), findsOneWidget);
+      });
+    }
 
-    expect(actions.saved.single.enabled, isTrue);
-    expect(accessOf(tester), NotificationAccess.unavailable);
-  });
+    testWidgets(
+      'does not turn on and reports the error when the platform throws',
+      (tester) async {
+        final actions = _FakeSettingsActions();
+        final scheduler = _FakeScheduler()
+          ..error = StateError('no Notification');
+        await tester.pumpWidget(_host(actions, scheduler));
+        await tester.pumpAndSettle();
 
-  testWidgets('the switch still turns on when the platform throws', (
-    tester,
-  ) async {
-    final actions = _FakeSettingsActions();
-    await tester.pumpWidget(_host(actions, _FakeScheduler(throws: true)));
-    await tester.pumpAndSettle();
+        await _toggle(tester);
 
-    await tester.tap(find.byType(Switch));
-    await tester.pumpAndSettle();
-
-    expect(actions.saved.single.enabled, isTrue);
-    expect(accessOf(tester), NotificationAccess.unavailable);
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('granted permission is recorded', (tester) async {
-    await tester.pumpWidget(_host(_FakeSettingsActions(), _FakeScheduler()));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byType(Switch));
-    await tester.pumpAndSettle();
-
-    expect(accessOf(tester), NotificationAccess.granted);
-  });
-
-  testWidgets('explains a blocked permission and lets the user retry', (
-    tester,
-  ) async {
-    final scheduler = _FakeScheduler();
-    await tester.pumpWidget(
-      _host(
-        _FakeSettingsActions(),
-        scheduler,
-        reminders: const ReminderSettings(enabled: true),
-        startBlocked: true,
-      ),
+        expect(actions.saved, isEmpty);
+        expect(_status(tester), NotificationAccessStatus.failed);
+        expect(find.textContaining('no Notification'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
     );
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('notifications-blocked')), findsOneWidget);
-
-    await tester.tap(find.text('Try again'));
-    await tester.pumpAndSettle();
-
-    expect(scheduler.permissionRequests, 1);
-    expect(find.byKey(const Key('notifications-blocked')), findsNothing);
   });
 
-  testWidgets('no warning while reminders are off', (tester) async {
-    await tester.pumpWidget(
-      _host(_FakeSettingsActions(), _FakeScheduler(), startBlocked: true),
-    );
-    await tester.pumpAndSettle();
+  group('when the browser never answers', () {
+    testWidgets('shows that it is waiting, with the switch disabled', (
+      tester,
+    ) async {
+      final actions = _FakeSettingsActions();
+      final scheduler = _FakeScheduler()..hang = Completer();
+      await tester.pumpWidget(_host(actions, scheduler));
+      await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('notifications-blocked')), findsNothing);
+      await tester.tap(find.byType(Switch));
+      await tester.pump();
+
+      expect(find.textContaining('Waiting for'), findsOneWidget);
+      expect(find.byType(LinearProgressIndicator), findsOneWidget);
+      expect(
+        tester.widget<SwitchListTile>(find.byType(SwitchListTile)).onChanged,
+        isNull,
+      );
+
+      scheduler.hang!.complete(PermissionResult.granted);
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('gives up after the timeout with an explanation', (
+      tester,
+    ) async {
+      final actions = _FakeSettingsActions();
+      final scheduler = _FakeScheduler()..hang = Completer();
+      await tester.pumpWidget(_host(actions, scheduler));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(Switch));
+      await tester.pump();
+      await tester.pump(
+        notificationRequestTimeout + const Duration(seconds: 1),
+      );
+
+      expect(_status(tester), NotificationAccessStatus.noResponse);
+      expect(actions.saved, isEmpty);
+      expect(find.text("The system didn't answer"), findsOneWidget);
+      expect(find.text('Try again'), findsOneWidget);
+    });
   });
 
-  testWidgets('disabling does not ask for permission', (tester) async {
-    final actions = _FakeSettingsActions();
-    final scheduler = _FakeScheduler();
-    await tester.pumpWidget(
-      _host(
-        actions,
-        scheduler,
-        reminders: const ReminderSettings(enabled: true),
-      ),
-    );
-    await tester.pumpAndSettle();
+  group('try again', () {
+    testWidgets('turns reminders on once permission is fixed', (tester) async {
+      final actions = _FakeSettingsActions();
+      final scheduler = _FakeScheduler(result: PermissionResult.denied);
+      await tester.pumpWidget(_host(actions, scheduler));
+      await tester.pumpAndSettle();
+      await _toggle(tester);
+      expect(actions.saved, isEmpty);
 
-    await tester.tap(find.byType(Switch));
-    await tester.pumpAndSettle();
+      scheduler.result = PermissionResult.granted;
+      await tester.tap(find.text('Try again'));
+      await tester.pumpAndSettle();
 
-    expect(scheduler.permissionRequests, 0);
-    expect(actions.saved.single.enabled, isFalse);
+      expect(actions.saved.single.enabled, isTrue);
+      expect(_notice, findsNothing);
+    });
+
+    testWidgets('keeps the explanation while it is still blocked', (
+      tester,
+    ) async {
+      final actions = _FakeSettingsActions();
+      await tester.pumpWidget(
+        _host(actions, _FakeScheduler(result: PermissionResult.denied)),
+      );
+      await tester.pumpAndSettle();
+      await _toggle(tester);
+
+      await tester.tap(find.text('Try again'));
+      await tester.pumpAndSettle();
+
+      expect(actions.saved, isEmpty);
+      expect(_notice, findsOneWidget);
+    });
   });
 
-  testWidgets('controls are inert while reminders are off', (tester) async {
-    final actions = _FakeSettingsActions();
-    await tester.pumpWidget(_host(actions, _FakeScheduler()));
-    await tester.pumpAndSettle();
+  group('turning reminders off', () {
+    testWidgets('does not ask for permission and saves', (tester) async {
+      final actions = _FakeSettingsActions();
+      final scheduler = _FakeScheduler();
+      await tester.pumpWidget(
+        _host(
+          actions,
+          scheduler,
+          reminders: const ReminderSettings(enabled: true),
+        ),
+      );
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('interval-30')));
-    await tester.pump();
+      await _toggle(tester);
 
-    expect(actions.saved, isEmpty);
+      expect(scheduler.permissionRequests, 0);
+      expect(actions.saved.single.enabled, isFalse);
+    });
   });
 
-  testWidgets('changes the interval and toggles weekdays', (tester) async {
-    final actions = _FakeSettingsActions();
-    await tester.pumpWidget(
-      _host(
-        actions,
-        _FakeScheduler(),
-        reminders: const ReminderSettings(enabled: true),
-      ),
-    );
-    await tester.pumpAndSettle();
+  group('other controls', () {
+    testWidgets('are inert while reminders are off', (tester) async {
+      final actions = _FakeSettingsActions();
+      await tester.pumpWidget(_host(actions, _FakeScheduler()));
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('interval-30')));
-    await tester.pump();
-    await tester.tap(find.byKey(Key('weekday-${DateTime.saturday}')));
-    await tester.pump();
+      await tester.tap(find.byKey(const Key('interval-30')));
+      await tester.pump();
 
-    expect(actions.saved[0].intervalMinutes, 30);
-    expect(actions.saved[1].weekdays, isNot(contains(DateTime.saturday)));
-    expect(actions.saved[1].weekdays, hasLength(6));
+      expect(actions.saved, isEmpty);
+    });
+
+    testWidgets('change the interval and toggle weekdays', (tester) async {
+      final actions = _FakeSettingsActions();
+      await tester.pumpWidget(
+        _host(
+          actions,
+          _FakeScheduler(),
+          reminders: const ReminderSettings(enabled: true),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('interval-30')));
+      await tester.pump();
+      await tester.tap(find.byKey(Key('weekday-${DateTime.saturday}')));
+      await tester.pump();
+
+      expect(actions.saved[0].intervalMinutes, 30);
+      expect(actions.saved[1].weekdays, isNot(contains(DateTime.saturday)));
+      expect(actions.saved[1].weekdays, hasLength(6));
+    });
   });
 }

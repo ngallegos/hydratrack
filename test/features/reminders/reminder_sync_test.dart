@@ -7,7 +7,8 @@ class _RecordingScheduler implements ReminderScheduler {
   final plans = <List<DateTime>>[];
 
   @override
-  Future<bool> requestPermission() async => true;
+  Future<PermissionResult> requestPermission() async =>
+      PermissionResult.granted;
 
   @override
   Future<void> replaceAll(List<DateTime> times) async => plans.add(times);
