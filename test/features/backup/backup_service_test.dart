@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hydratrack/data/backup.dart';
@@ -84,6 +85,12 @@ class _Device {
 }
 
 void main() {
+  setUpAll(() {
+    // Each simulated device has its own in-memory database, so the warning
+    // about several AppDatabase instances sharing an executor doesn't apply.
+    driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+  });
+
   late _FakeTransfer transfer;
   late _Device device;
 
