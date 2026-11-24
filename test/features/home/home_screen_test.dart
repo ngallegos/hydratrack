@@ -5,6 +5,8 @@ import 'package:hydratrack/data/repositories/log_repository.dart';
 import 'package:hydratrack/domain/drink.dart';
 import 'package:hydratrack/domain/drink_category.dart';
 import 'package:hydratrack/domain/log_entry.dart';
+import 'package:hydratrack/domain/volume_unit.dart';
+import 'package:hydratrack/features/settings/settings_providers.dart';
 import 'package:hydratrack/features/home/home_providers.dart';
 import 'package:hydratrack/features/home/home_screen.dart';
 import 'package:hydratrack/features/home/starred_drink_chip.dart';
@@ -65,6 +67,7 @@ Widget _host(
   _FakeLogRepository logs, {
   Map<String, double> hydration = const {},
   int goalMl = 2500,
+  VolumeUnit unit = VolumeUnit.ml,
 }) => ProviderScope(
   overrides: [
     categoriesProvider.overrideWith((ref) => Stream.value([_water, _coffee])),
@@ -72,6 +75,7 @@ Widget _host(
     todayHydrationProvider.overrideWithValue(hydration),
     dailyGoalMlProvider.overrideWithValue(goalMl),
     logRepositoryProvider.overrideWithValue(logs),
+    volumeUnitProvider.overrideWithValue(unit),
   ],
   child: const MaterialApp(home: HomeScreen()),
 );
@@ -141,5 +145,70 @@ void main() {
     expect(logs.added.single, (categoryId: 'coffee', volumeMl: 250));
     expect(find.text('Logged 250 ml Coffee'), findsOneWidget);
     expect(find.text('Log a drink'), findsNothing);
+  });
+
+  testWidgets('shows progress and chips in fluid ounces', (tester) async {
+    await tester.pumpWidget(
+      _host(
+        _FakeLogRepository(),
+        hydration: {'water': 1250},
+        unit: VolumeUnit.flOz,
+      ),
+    );
+    await _settle(tester);
+
+    expect(find.text('42.3 fl oz / 84.5 fl oz'), findsOneWidget);
+    expect(find.text('Glass of water · 8.5 fl oz'), findsOneWidget);
+  });
+
+  testWidgets('quick-logging in ounces still stores millilitres', (
+    tester,
+  ) async {
+    final logs = _FakeLogRepository();
+    await tester.pumpWidget(_host(logs, unit: VolumeUnit.flOz));
+    await _settle(tester);
+
+    await tester.tap(find.byType(StarredDrinkChip));
+    await _settle(tester);
+
+    expect(logs.added.single.volumeMl, 250);
+    expect(find.text('Logged 8.5 fl oz Water'), findsOneWidget);
+  });
+
+  testWidgets('the log sheet leaves the volume alone unless it is moved', (
+    tester,
+  ) async {
+    final logs = _FakeLogRepository();
+    await tester.pumpWidget(_host(logs, unit: VolumeUnit.flOz));
+    await _settle(tester);
+
+    await tester.tap(find.text('Log drink'));
+    await _settle(tester);
+    expect(find.text('8.5 fl oz'), findsWidgets);
+    await tester.tap(find.widgetWithText(FilledButton, 'Log'));
+    await _settle(tester);
+
+    expect(logs.added.single.volumeMl, 250);
+  });
+
+  testWidgets('moving the ounce slider logs the converted volume', (
+    tester,
+  ) async {
+    final logs = _FakeLogRepository();
+    await tester.pumpWidget(_host(logs, unit: VolumeUnit.flOz));
+    await _settle(tester);
+
+    await tester.tap(find.text('Log drink'));
+    await _settle(tester);
+    await tester.drag(find.byType(Slider), const Offset(80, 0));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, 'Log'));
+    await _settle(tester);
+
+    final ml = logs.added.single.volumeMl;
+    expect(ml, greaterThan(250));
+    final ounces = ml / 29.5735;
+    final nearestHalfOunce = (ounces * 2).round() / 2;
+    expect(ounces, closeTo(nearestHalfOunce, 0.02));
   });
 }

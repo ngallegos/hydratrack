@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hydratrack/domain/goal.dart';
+import 'package:hydratrack/domain/volume_unit.dart';
 import 'package:hydratrack/features/onboarding/onboarding_screen.dart';
 import 'package:hydratrack/features/settings/app_settings.dart';
 import 'package:hydratrack/features/settings/settings_providers.dart';
@@ -15,6 +16,10 @@ typedef _Onboarding = ({
 
 class _FakeSettingsActions extends Fake implements SettingsActions {
   final completed = <_Onboarding>[];
+  final units = <VolumeUnit>[];
+
+  @override
+  Future<void> setVolumeUnit(VolumeUnit unit) async => units.add(unit);
 
   @override
   Future<void> completeOnboarding({
@@ -42,13 +47,26 @@ Widget _host(_FakeSettingsActions actions) {
   );
 }
 
+/// The form is taller than the test screen and lists build lazily, so scroll
+/// to the widget before tapping it.
+Future<void> _tapText(WidgetTester tester, String text) async {
+  await tester.scrollUntilVisible(
+    find.text(text),
+    100,
+    scrollable: find.byType(Scrollable).first,
+  );
+  await tester.ensureVisible(find.text(text));
+  await tester.pump();
+  await tester.tap(find.text(text));
+}
+
 void main() {
   testWidgets('skip saves the default goal and goes home', (tester) async {
     final actions = _FakeSettingsActions();
     await tester.pumpWidget(_host(actions));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Skip, use the default'));
+    await _tapText(tester, 'Skip, use the default');
     await tester.pumpAndSettle();
 
     expect(actions.completed.single, (
@@ -67,7 +85,7 @@ void main() {
     await tester.enterText(find.byType(TextField), '70');
     await tester.tap(find.byKey(const Key('activity-light')));
     await tester.pump();
-    await tester.tap(find.text('Start'));
+    await _tapText(tester, 'Start');
     await tester.pumpAndSettle();
 
     expect(actions.completed.single, (
@@ -93,6 +111,16 @@ void main() {
     expect(button().onPressed, isNotNull);
   });
 
+  testWidgets('offers a unit choice', (tester) async {
+    final actions = _FakeSettingsActions();
+    await tester.pumpWidget(_host(actions));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('fl oz'));
+
+    expect(actions.units, [VolumeUnit.flOz]);
+  });
+
   // Fails until the suggestedDailyGoalMl exercise (lib/domain/goal.dart) is done.
   testWidgets('suggest fills the goal from weight and activity', (
     tester,
@@ -102,7 +130,7 @@ void main() {
 
     await tester.enterText(find.byType(TextField), '70');
     await tester.pump();
-    await tester.tap(find.text('Suggest my goal'));
+    await _tapText(tester, 'Suggest my goal');
     await tester.pump();
 
     expect(find.text('2,450 ml'), findsOneWidget);
