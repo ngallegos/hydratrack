@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'reminder_scheduler.dart';
@@ -55,7 +56,17 @@ class WebReminderScheduler implements ReminderScheduler {
     for (final (index, time) in times.indexed) {
       final delay = time.difference(now);
       if (delay.isNegative) continue;
-      _timers.add(Timer(delay, () => _show(index + 1)));
+      _timers.add(
+        Timer(delay, () {
+          // Showing fails if permission is missing; that must not surface as
+          // an unhandled error from a timer callback.
+          unawaited(
+            _show(index + 1).catchError((Object error) {
+              debugPrint('Could not show reminder: $error');
+            }),
+          );
+        }),
+      );
     }
   }
 }

@@ -62,6 +62,21 @@ void main() {
     expect(shown, isEmpty);
   });
 
+  testWidgets('a reminder that cannot be shown is not an unhandled error', (
+    tester,
+  ) async {
+    final failing = WebReminderScheduler(
+      show: (id) async => throw StateError('permission missing'),
+      requestPermission: () async => false,
+      clock: () => now,
+    );
+    await failing.replaceAll([now.add(const Duration(minutes: 5))]);
+
+    await tester.pump(const Duration(minutes: 6));
+
+    expect(tester.takeException(), isNull);
+  });
+
   test('requestPermission delegates', () async {
     expect(await scheduler.requestPermission(), isTrue);
   });
